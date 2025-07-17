@@ -1,0 +1,9 @@
+fileFormatVersion: 2
+guid: fd3484fe779abe6449fe7f8103d38be2
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/GameScripts/Achievements/UseShuffleAchievement.cs
+  uploadId: 722904

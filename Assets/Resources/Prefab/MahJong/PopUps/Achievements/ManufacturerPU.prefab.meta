@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 85f10e9956d46f44aafb5def78fb1039
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Prefabs/PopUps/Achievements/AchievementsPU.prefab
+  uploadId: 722904

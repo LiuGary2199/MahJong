@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: 7f0aca71f92330d449a0467c9755fa54
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - messagePrefab: {fileID: 5602521218025798326, guid: 64d6ff8d99a41354ba081d55aacb055b,
+      type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/MKUtils/GUI/ShowSelfClosingMessage.cs
+  uploadId: 722904

@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: a813412f5d371674582685ecaf285b22
+timeCreated: 1490256105
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 100
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/MKUtils/Touch/TouchPad.cs
+  uploadId: 722904

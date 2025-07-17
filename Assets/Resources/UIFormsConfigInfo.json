@@ -1,0 +1,79 @@
+{
+  "ConfigInfo": [
+    {
+      "Key": "本配置文件说明"
+    },
+    {
+      "Key": "AideBelle",
+      "Value": "UIPanel\\AideBelle"
+    },
+    {
+      "Key": "RadiateBelle",
+      "Value": "UIPanel\\RadiateBelle"
+    },
+    {
+      "Key": "Evoke",
+      "Value": "UIPanel\\Common\\Evoke"
+    },
+    {
+      "Key": "CollectEffect",
+      "Value": "UIPanel\\Common\\CollectEffect"
+    },
+    {
+      "Key": "SolveListenerBelle",
+      "Value": "UIPanel\\SolveListenerBelle"
+    },
+    {
+        "Key": "CashOutPanel",
+        "Value": "UIPanel\\CashOutPanel"
+    },
+    {
+      "Key": "SoulOrBelle",
+      "Value": "UIPanel\\SoulOrBelle"
+    },
+    {
+      "Key": "DailyGiftPanel",
+      "Value": "UIPanel\\DailyGift\\DailyGiftPanel"
+    },
+    {
+      "Key": "RemoveAdPanel",
+      "Value": "UIPanel\\RemoveAd\\RemoveAdPanel"
+    },
+    {
+      "Key": "EndlessTreasurePanel",
+      "Value": "UIPanel\\EndlessTreasure\\EndlessTreasurePanel"
+    },
+    {
+      "Key": "RankStarPanel",
+      "Value": "UIPanel\\RankStar\\RankStarPanel"
+    },
+    {
+      "Key": "RewardPanel",
+      "Value": "UIPanel\\RewardPanel\\RewardPanel"
+    },
+    {
+      "Key": "AxeShipSlaveBelle",
+      "Value": "UIPanel\\AxeShipSlaveBelle"
+    },
+    {
+      "Key": "AnExplainDashBelle",
+      "Value": "UIPanel\\Test\\AnExplainDashBelle"
+    },
+    {
+      "Key": "ScenicBerg",
+      "Value": "UIPanel\\ScenicBerg"
+    },
+    {
+      "Key": "TorporDewBelle",
+      "Value": "UIPanel\\TorporDewBelle"
+    },
+    {
+      "Key": "LoveTorpor",
+      "Value": "UIPanel\\LoveTorpor"
+    },
+    {
+      "Key": "NotGrope",
+      "Value": "UIPanel\\NotGrope"
+    }
+  ]
+}

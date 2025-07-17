@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b1ab0d0a85c12fa4aae84cfc7150629f
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Prefabs/PopUps/LoadGroupPU.prefab
+  uploadId: 722904

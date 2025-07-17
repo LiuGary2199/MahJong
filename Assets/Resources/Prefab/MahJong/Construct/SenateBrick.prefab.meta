@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 29d5807c81e5f244e844ec6820374870
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Prefabs/Construct/ButtonLayer.prefab
+  uploadId: 722904

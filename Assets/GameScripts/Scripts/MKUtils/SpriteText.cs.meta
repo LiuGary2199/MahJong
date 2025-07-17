@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: e167e59d0dc3dde4db5da1a43e058a9d
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/MKUtils/SpriteText.cs
+  uploadId: 722904

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ffa3e2c6b7b366a4894a9b79eb365cf8
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Prefabs/PopUps/Achievements/Lines/Win5LevelsAchievementLine.prefab
+  uploadId: 722904

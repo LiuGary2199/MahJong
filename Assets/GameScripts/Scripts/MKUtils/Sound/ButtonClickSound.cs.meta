@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: f27a1c2cbb85a9d4a84a5e3cc6870b6c
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/MKUtils/Sound/ButtonClickSound.cs
+  uploadId: 722904

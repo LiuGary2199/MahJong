@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: d975e1a68d93c7a4eb952d644c4d1185
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/MKUtils/GUI/Slider/ProgressBarSlider.cs
+  uploadId: 722904

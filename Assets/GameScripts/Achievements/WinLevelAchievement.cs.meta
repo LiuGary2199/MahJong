@@ -1,0 +1,9 @@
+fileFormatVersion: 2
+guid: b9c2fc49472d18947ab98ee1d55862b9
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/GameScripts/Achievements/WinLevelAchievement.cs
+  uploadId: 722904

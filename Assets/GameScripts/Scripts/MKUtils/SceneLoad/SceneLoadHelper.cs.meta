@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: f5f53decaeb12354a8989b7580e72caf
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/MKUtils/SceneLoad/SceneLoadHelper.cs
+  uploadId: 722904

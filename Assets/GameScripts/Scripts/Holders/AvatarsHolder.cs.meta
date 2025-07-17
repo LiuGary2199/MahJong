@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: bc93c31e276532a4d9a1cda9f5498449
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/Holders/AvatarsHolder.cs
+  uploadId: 722904

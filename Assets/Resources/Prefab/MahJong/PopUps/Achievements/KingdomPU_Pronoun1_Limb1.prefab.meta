@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 85e2b06ee2fd5994ba6481312a317c81
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Prefabs/PopUps/Achievements/RewardsPU_shuffle1_hint1.prefab
+  uploadId: 722904

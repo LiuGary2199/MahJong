@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: b71f69c682c3e2648a914978097d6af1
+timeCreated: 1493809982
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/MKUtils/Destroy/DelayDestroy.cs
+  uploadId: 722904

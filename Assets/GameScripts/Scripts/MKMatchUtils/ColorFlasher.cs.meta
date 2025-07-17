@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 60451c0d3d34a134e97e2a306c17d402
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307235
+  packageName: MK - Grand Mahjong Game
+  packageVersion: 1.0
+  assetPath: Assets/Mahjong/Scripts/MKMatchUtils/ColorFlasher.cs
+  uploadId: 722904
