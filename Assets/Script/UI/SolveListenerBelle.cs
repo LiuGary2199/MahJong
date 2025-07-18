@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using Spine;
 using Spine.Unity;
 using DG.Tweening;
+using AdjustSdk;
 
 public class SolveListenerBelle : CoaxUIProwl
 {
@@ -176,7 +177,10 @@ public class SolveListenerBelle : CoaxUIProwl
         {
             HandScam();
         });
-
+        Adjust.GetAdid((adid) =>
+        {
+            print("adid: " + adid);
+        });
     }
 
     private bool OfAxeShip()

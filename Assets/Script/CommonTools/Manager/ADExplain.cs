@@ -5,6 +5,7 @@ using System;
 using AdjustSdk;
 using LitJson;
 using DG.Tweening;
+using Unity.VisualScripting;
 
 public class ADExplain : MonoBehaviour
 {
@@ -104,13 +105,14 @@ public class ADExplain : MonoBehaviour
             }
             else
             {
-
                 Adjust.GetAdid((adid) =>
                 {
                     adjustId = adid;
+                  
                 });
                 if (!string.IsNullOrEmpty(adjustId))
                 {
+                    print("adid: " + adjustId);
                     MaxSdk.SetUserId(adjustId);
                     MaxSdk.InitializeSdk();
                     OpenFiveExplain.BisRecoil(CStatus.Be_MarvelAdid, adjustId);
@@ -229,7 +231,8 @@ public class ADExplain : MonoBehaviour
         }
         else
         {
-            //rewardCallBackAction?.Invoke(false);
+            EvokeExplain.AirExpertly().HaleEvoke("No ads right now, please try it later.");
+            HungryReedBackSoften?.Invoke(false);
         }
 
         // 上报ecpm
@@ -406,7 +409,7 @@ public class ADExplain : MonoBehaviour
         else
         {
             EvokeExplain.AirExpertly().HaleEvoke("No ads right now, please try it later.");
-            // rewardCallBackAction(false);
+            HungryReedBackSoften(false);
         }
     }
 

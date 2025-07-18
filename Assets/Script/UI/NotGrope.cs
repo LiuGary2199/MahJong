@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using AdjustSdk;
 using DG.Tweening;
 using Mkey;
 using UnityEngine;
@@ -29,8 +30,8 @@ public class NotGrope : CoaxUIProwl
         Fog_Senate.gameObject.SetActive(false);
 
 
-
-
+        GradeAD_Senate.enabled = true;
+        AD_Senate.enabled = true;
 
         int shuffles = ShuffleHolder.Count; // 重洗次数
         /* 
@@ -134,10 +135,15 @@ public class NotGrope : CoaxUIProwl
          FastBroadleaf(); // 停止倒计时
          ADExplain.Expertly.FoilTorporWeary((success) =>
          {
+             GradeAD_Senate.enabled = false;
              if (success)
              {
                  GameBoard.Instance.ShuffleGrid(null); // 执行重洗网格逻辑
                  DelayUIFine(GetType().Name);
+             }
+             else 
+             {
+                 GradeAD_Senate.enabled = true;
              }
          }, "6");
          PorkTruckRevere.AirExpertly().FastTruck("1007", "1");
@@ -160,6 +166,7 @@ public class NotGrope : CoaxUIProwl
 
         AD_Senate.onClick.AddListener(() =>
         {
+            AD_Senate.enabled = false;
             FastBroadleaf(); // 停止倒计时
             ADExplain.Expertly.FoilTorporWeary((success) =>
             {
@@ -167,6 +174,10 @@ public class NotGrope : CoaxUIProwl
                 {
                     GameBoard.Instance.ShuffleGrid(null); // 执行重洗网格逻辑
                     DelayUIFine(GetType().Name);
+                }
+                else
+                {
+                    AD_Senate.enabled = true;
                 }
             }, "6");
             PorkTruckRevere.AirExpertly().FastTruck("1007", "1");

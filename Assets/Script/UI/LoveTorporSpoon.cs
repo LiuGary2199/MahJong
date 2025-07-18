@@ -26,11 +26,16 @@ public class LoveTorporSpoon : MonoBehaviour
         m_AirYam.onClick.RemoveAllListeners();
         m_AnPianoYam.onClick.AddListener(() =>
         {
+            m_AnPianoYam.enabled = false;
             ADExplain.Expertly.FoilTorporWeary((success) =>
             {
                 if (success)
                 {
                     AnAnStatus?.Invoke(m_TramElect);
+                }
+                else 
+                {
+                    m_AnPianoYam.enabled = true;
                 }
             }, "7");
         });

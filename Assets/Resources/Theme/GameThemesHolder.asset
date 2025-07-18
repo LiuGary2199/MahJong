@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: GameThemesHolder
   m_EditorClassIdentifier: 
   themes:
+  - {fileID: 11400000, guid: 01a848fb9172a9f4492dcdecc03de2a7, type: 2}
   - {fileID: 11400000, guid: 42b46b0f1a5a10447b40658c97a7690e, type: 2}
   - {fileID: 11400000, guid: 2839d0552535fe344b95d501d98f5929, type: 2}
   - {fileID: 11400000, guid: 3ca05f1e9cb8b4643a36082b8f81a656, type: 2}
