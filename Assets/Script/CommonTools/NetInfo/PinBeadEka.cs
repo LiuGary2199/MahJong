@@ -80,7 +80,7 @@ public class PinBeadEka : MonoBehaviour
     }
     private void Start()
     {
-
+        Application.targetFrameRate = 240;
         if (Application.platform == RuntimePlatform.Android)
         {
             AndroidJavaClass aj = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
