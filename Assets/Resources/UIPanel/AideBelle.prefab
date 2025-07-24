@@ -2836,7 +2836,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16dfd25edddec92418ac280400a05f0c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BedTram: {fileID: 0}
+  BedTram: {fileID: 7119638471451055565, guid: f245b2c95b964464e8e42766b76a1264, type: 3}
   OfLiftBed: 0
   DarnUpFlash: 0
 --- !u!1 &5334308895031348142

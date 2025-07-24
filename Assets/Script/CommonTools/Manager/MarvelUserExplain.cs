@@ -63,12 +63,18 @@ public class MarvelUserExplain : MonoBehaviour
         string adjustAdid = "";
         while (true)
         {
+            Debug.Log("adjustOpenMarvelBulbA" + adjustAdid);
             if (string.IsNullOrEmpty(adjustAdid))
             {
+                Adjust.GetAdid((adid) =>
+                {
+                    adjustAdid = adid;
+                });
                 yield return new WaitForSeconds(5);
             }
             else
             {
+                Debug.Log("adjustOpenMarvelBulbB" + adjustAdid);
                 OpenFiveExplain.BisRecoil(CStatus.Be_MarvelAdid, adjustAdid);
                 PinBeadEka.instance.FastMarvelBulb();
                 yield break;
@@ -98,7 +104,12 @@ public class MarvelUserExplain : MonoBehaviour
     {
         #if UNITY_IOS
             return;
-        #endif
+#endif
+
+        if (OpenFiveExplain.AirRecoil(Be_ADTallUserMold) == "" && isOldUser)
+        {
+            OldUserSet();
+        }
         // 如果后台配置的adjust_init_act_position <= 0，直接初始化
         if (string.IsNullOrEmpty(PinBeadEka.instance.StatusFive.adjust_init_act_position) || int.Parse(PinBeadEka.instance.StatusFive.adjust_init_act_position) <= 0)
         {
@@ -170,6 +181,16 @@ public class MarvelUserExplain : MonoBehaviour
         }
     }
 
+    /*
+     *  API
+     *  标记老用户
+     */
+    public void OldUserSet()
+    {
+        print("old user add adjust status");
+        OpenFiveExplain.BisRecoil(Be_ADTallUserMold, AdjustStatus.OldUser.ToString());
+        PorkTruckRevere.AirExpertly().FastTruck("1093", AirMarvelLove());
+    }
     /*
      * API
      * 根据行为 初始化 adjust

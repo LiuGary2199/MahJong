@@ -1,0 +1,38 @@
+<dependencies>
+  <packages>
+    <package>androidx.recyclerview:recyclerview:1.2.1</package>
+    <package>com.adjust.sdk:adjust-android:5.4.0</package>
+    <package>com.android.installreferrer:installreferrer:2.2</package>
+    <package>com.android.support:customtabs:28.+</package>
+    <package>com.android.support:recyclerview-v7:28.+</package>
+    <package>com.applovin.mediation:bytedance-adapter:7.3.0.3.0</package>
+    <package>com.applovin.mediation:chartboost-adapter:9.8.3.0</package>
+    <package>com.applovin.mediation:fyber-adapter:8.3.7.0</package>
+    <package>com.applovin.mediation:inmobi-adapter:10.8.0.0</package>
+    <package>com.applovin.mediation:ironsource-adapter:8.7.0.0.0</package>
+    <package>com.applovin.mediation:mintegral-adapter:16.8.91.0</package>
+    <package>com.applovin.mediation:unityads-adapter:4.12.5.0</package>
+    <package>com.applovin.mediation:vungle-adapter:7.5.0.3</package>
+    <package>com.applovin:applovin-sdk:13.0.1</package>
+    <package>com.google.android.gms:play-services-base:16.1.0</package>
+    <package>com.squareup.picasso:picasso:2.71828</package>
+  </packages>
+  <files />
+  <settings>
+    <setting name="androidAbis" value="armeabi-v7a" />
+    <setting name="bundleId" value="com.DefaultCompany.SynchroMeld" />
+    <setting name="explodeAars" value="True" />
+    <setting name="gradleBuildEnabled" value="True" />
+    <setting name="gradlePropertiesTemplateEnabled" value="False" />
+    <setting name="gradleTemplateEnabled" value="False" />
+    <setting name="installAndroidPackages" value="True" />
+    <setting name="localMavenRepoDir" value="Assets/GeneratedLocalRepo" />
+    <setting name="packageDir" value="Assets/Plugins/Android" />
+    <setting name="patchAndroidManifest" value="True" />
+    <setting name="patchMainTemplateGradle" value="True" />
+    <setting name="projectExportEnabled" value="True" />
+    <setting name="useFullCustomMavenRepoPathWhenExport" value="True" />
+    <setting name="useFullCustomMavenRepoPathWhenNotExport" value="False" />
+    <setting name="useJetifier" value="True" />
+  </settings>
+</dependencies>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Lofelt.NiceVibrations;
 using UnityEngine;
 
 namespace Mkey
@@ -437,6 +438,7 @@ namespace Mkey
                     if (!selectObject)
                     {
                         selectObject = Instantiate(selectPrefab, SRenderer.transform);
+                        HapticPatterns.PlayPreset(HapticPatterns.PresetType.HeavyImpact);
                         selectObject.GetComponent<SpriteRenderer>().sortingOrder = GetRenderOrder(true) + 1;
                     }
                 }
@@ -606,7 +608,7 @@ namespace Mkey
                     stepStrengths[i] = baseStrength * (1f - 0.7f * (i - totalSteps / 2) / (totalSteps / 2)); // 幅度递减
                 }
             }
-
+            HapticPatterns.PlayPreset(HapticPatterns.PresetType.HeavyImpact);
             // 启动协程实现分步抖动
             StartCoroutine(ShakeCoroutine(spriteTransform, originalPos, stepTimes, stepStrengths));
         }

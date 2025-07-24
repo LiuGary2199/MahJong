@@ -7,6 +7,8 @@ using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using DG.Tweening;
+using Lofelt.NiceVibrations;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -737,6 +739,7 @@ namespace Mkey
 
             });
             if (collectSound) MSound.PlayClip(time * 0.6f, collectSound);
+            HapticPatterns.PlayPreset(HapticPatterns.PresetType.HeavyImpact);
             ExertEka.AirExpertly().EpicPurify(ExertMold.SceneMusic.Sound_matchmj);
             yield return new WaitWhile(() => !moveComplete);
 

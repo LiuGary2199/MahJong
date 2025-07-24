@@ -271,12 +271,13 @@ public class ADExplain : MonoBehaviour
         }
 
         // 发回收入数据给Mintegral
+        Debug.Log("hahahaha" + adjustAdid);
         if (!string.IsNullOrEmpty(adjustAdid))
         {
 #if UNITY_ANDROID || UNITY_IOS
             MBridgeRevenueParamsEntity mBridgeRevenueParamsEntity = new MBridgeRevenueParamsEntity(MBridgeRevenueParamsEntity.ATTRIBUTION_PLATFORM_ADJUST, adjustAdid);
             ///MaxSdkBase.AdInfo类型的adInfo
-            //mBridgeRevenueParamsEntity.SetMaxAdInfo(info);
+            mBridgeRevenueParamsEntity.SetMaxAdInfo(info);
             MBridgeRevenueManager.Track(mBridgeRevenueParamsEntity);
             UnityEngine.Debug.Log(nameof(MBridgeRevenueManager) + "~Rewarded revenue:" + info.Revenue);
 #endif
@@ -356,7 +357,7 @@ public class ADExplain : MonoBehaviour
 #if UNITY_ANDROID || UNITY_IOS
             MBridgeRevenueParamsEntity mBridgeRevenueParamsEntity = new MBridgeRevenueParamsEntity(MBridgeRevenueParamsEntity.ATTRIBUTION_PLATFORM_ADJUST, adjustAdid);
             ///MaxSdkBase.AdInfo类型的adInfo
-            //mBridgeRevenueParamsEntity.SetMaxAdInfo(info);
+            mBridgeRevenueParamsEntity.SetMaxAdInfo(info);
             MBridgeRevenueManager.Track(mBridgeRevenueParamsEntity);
             UnityEngine.Debug.Log(nameof(MBridgeRevenueManager) + "~Interstitial revenue:" + info.Revenue);
 #endif
