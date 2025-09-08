@@ -1,12 +1,13 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
+using AdjustSdk;
+using DG.Tweening;
 using Mkey;
-using UnityEngine;
-using UnityEngine.UI;
 using Spine;
 using Spine.Unity;
-using DG.Tweening;
-using AdjustSdk;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.XR;
 
 public class SolveListenerBelle : CoaxUIProwl
 {
@@ -26,7 +27,7 @@ public class SolveListenerBelle : CoaxUIProwl
 [UnityEngine.Serialization.FormerlySerializedAs("grtMoreRect")]    public RectTransform RayWeakEach;
 [UnityEngine.Serialization.FormerlySerializedAs("m_SkeletonGraphic")]    public SkeletonGraphic m_DiscoverPercent;
 [UnityEngine.Serialization.FormerlySerializedAs("tween")]    // Start is called before the first frame update
-
+    private string ADstate = "1";
     public Tween Egypt;
     void Start()
     {
@@ -47,6 +48,7 @@ public class SolveListenerBelle : CoaxUIProwl
                         if (success)
                         {
                             FoilHole();
+                            ADstate = "1";
                         }
                         else
                         {
@@ -54,56 +56,33 @@ public class SolveListenerBelle : CoaxUIProwl
                             HandSolveSenate.enabled = true;
                         }
                     }, "2");
-                if (OfAxeErie())
-                {
-                    PorkTruckRevere.AirExpertly().FastTruck("1004", "1");
-                    OpenFiveExplain.BisSlay("newpass", false);
-
-                }
-
             }
         });
 
         HandSolveSenate.onClick.AddListener(() =>
         {
+            ADstate = "0";
+            BeHand();
             HandSolveSenate.enabled = false;
             AideBelle.Instance.MayPace(HungryLucky, TorporPaceNoisy.transform);
             if (!EkeNaturalAdYam)
             {
                 ADExplain.Expertly.NoThanksMayCrack();
             }
-
-            DelayUIFine(GetType().Name);
-
-            if (!OfAxeShip())
-            {
-                if (OfAxeErie())
-                {
-                    PorkTruckRevere.AirExpertly().FastTruck("1004", "0");
-                    OpenFiveExplain.BisSlay("newpass", false);
-                }
-            }
         });
     }
     public void BeHand()
     {
         HandSolveSenate.enabled = false;
+        HandScam();
         AideBelle.Instance.MayPace(HungryLucky, TorporPaceNoisy.transform);
         if (!EkeNaturalAdYam)
         {
             ADExplain.Expertly.NoThanksMayCrack();
         }
-
+        PorkTruckRevere.AirExpertly().FastTruck("1004", ADstate);
         DelayUIFine(GetType().Name);
 
-        if (!OfAxeShip())
-        {
-            if (OfAxeErie())
-            {
-                PorkTruckRevere.AirExpertly().FastTruck("1004", "0");
-                OpenFiveExplain.BisSlay("newpass", false);
-            }
-        }
     }
 
 
@@ -173,10 +152,7 @@ public class SolveListenerBelle : CoaxUIProwl
            }
 
        });
-        DOVirtual.DelayedCall(1f, () =>
-        {
-            HandScam();
-        });
+    
         Adjust.GetAdid((adid) =>
         {
             print("adid: " + adid);
@@ -249,16 +225,9 @@ public class SolveListenerBelle : CoaxUIProwl
               {
                   BeHand();
               });
-
-
             });
         });
 
         OpenFiveExplain.BisSlay(CStatus.Be_LoverHole, false);
     }
-    private bool OfAxeErie()
-    {
-        return !PlayerPrefs.HasKey("newpass" + "Bool") || OpenFiveExplain.AirSlay("newpass");
-    }
-
 }

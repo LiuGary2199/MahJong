@@ -1,7 +1,9 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using FastColoredTextBoxNS;
 using Lofelt.NiceVibrations;
+using Spine.Unity;
 using UnityEngine;
 
 namespace Mkey
@@ -21,7 +23,7 @@ namespace Mkey
         public SpriteRenderer constructLineHor; // 编辑器横线
         public SpriteRenderer constructLineVert; // 编辑器竖线
         public TextMesh constructLayerText; // 层数文本
-        public bool IsgoldTile= false; // 是否为金牌
+        public bool IsgoldTile = false; // 是否为金牌
 
         internal List<GridCell> rawOverBlockers; // 上方阻挡格子
         internal List<GridCell> rawLeftBlockers; // 左侧阻挡格子
@@ -35,6 +37,10 @@ namespace Mkey
         private Vector3 spriteTransformPosition; // 精灵初始位置
         private bool highlightedHint = false; // 是否高亮提示
         private bool highlightedSel = false; // 是否高亮选中
+
+        // 性能优化：静态缓存集合，避免重复创建
+        private static List<GridCell> tempBlockers = new List<GridCell>(8); // 静态缓存，预分配容量
+        private static GridObject tempGridObject; // 静态缓存GridObject，避免重复创建
         #endregion temp vars
 
         #region properties
@@ -42,6 +48,10 @@ namespace Mkey
         public int OccupiedRows => 2; // 占用行数
         private TouchManager TouchM { get { return TouchManager.Instance; } } // 触摸管理器
         public Transform spriteTransform => SRenderer.transform; // 精灵变换
+
+        public Transform insGoldTrans;
+        public GameObject qian_Skeleton;
+
         #endregion properties
 
         #region override
@@ -51,7 +61,7 @@ namespace Mkey
         public override void SetToFront(bool toFront)
         {
             SRenderer.sortingOrder = GetRenderOrder(toFront);
-            if (shadow) shadow.sortingOrder = (toFront) ? 20000 - 1:  SortingOrder.Base + Layer * 2000;
+            if (shadow) shadow.sortingOrder = (toFront) ? 20000 - 1 : SortingOrder.Base + Layer * 2000;
             // set border
             if (toFront)
             {
@@ -73,7 +83,7 @@ namespace Mkey
             if (!parent) return null;
             Layer = layer;
             DestroyHierCompetitor(parent, true, true);
-           
+
             MahjongTile gridObject = Instantiate(this, parent.transform);
             if (!gridObject) return null;
             gridObject.SetLayer(layer);
@@ -94,7 +104,7 @@ namespace Mkey
         public void LinkToCell(GridCell gridCell, bool setPosition)
         {
             transform.parent = gridCell.transform;
-            if(setPosition) transform.localPosition = Vector3.zero + layerOffset * Layer;
+            if (setPosition) transform.localPosition = Vector3.zero + layerOffset * Layer;
             ParentCell = gridCell;
 #if UNITY_EDITOR
             name = "MahjongTile " + ParentCell.ToString();
@@ -108,7 +118,7 @@ namespace Mkey
         }
 
         /// <summary>
-        /// 检查该对象能否按层放置在格子上
+        /// 检查该对象能否按层放置在格子上（优化版本，避免重复创建集合）
         /// </summary>
         /// <param name="gCell"></param>
         /// <returns></returns>
@@ -119,10 +129,16 @@ namespace Mkey
             {
                 int underLayer = layer - 1;
                 List<GridCell> cells = GetOccupiedCells(gCell);
-                foreach (var item in cells)
+
+                // 性能优化：使用for循环替代foreach，减少隐式迭代器分配
+                for (int i = 0; i < cells.Count; i++)
                 {
-                    GridObject gO = item.GetLayerObject(underLayer, true, true);
-                    if (!gO) return false;
+                    var item = cells[i];
+                    if (item != null)
+                    {
+                        GridObject gO = item.GetLayerObject(underLayer, true, true);
+                        if (!gO) return false;
+                    }
                 }
             }
             return true;
@@ -137,59 +153,95 @@ namespace Mkey
             return new Vector2Int(OccupiedRows, OccupiedCols);
         }
 
+        // 性能优化：复用集合，避免重复创建
+        private static List<GridCell> tempOccupiedCells = new List<GridCell>(4); // 预分配容量
+
         public override List<GridCell> GetOccupiedCells(GridCell gCell)
         {
-            List<GridCell> res = new List<GridCell>();
+            // 性能优化：复用集合，避免重复创建
+            tempOccupiedCells.Clear();
+
             int cRow = gCell.Row;
             int cCol = gCell.Column;
             MatchGrid mGrid = gCell.MGrid;
             GridCell _gCell;
+
             for (int r = cRow; r > cRow - OccupiedRows; r--)
             {
                 for (int c = cCol; c < cCol + OccupiedCols; c++)
                 {
                     _gCell = mGrid[r, c];
-                    if (_gCell) res.Add(_gCell);
+                    if (_gCell) tempOccupiedCells.Add(_gCell);
                 }
             }
-            return res;
+
+            // 返回新列表副本，避免外部修改影响缓存
+            return new List<GridCell>(tempOccupiedCells);
         }
         #endregion override
 
         /// <summary>
-        /// 判断该格子是否可被填充
+        /// 判断该格子是否可被填充（优化版本，使用缓存阻挡信息）
         /// </summary>
         public bool IsFreeToFill()
         {
-            NeighBors neighBors = ParentCell.Neighbors;
-            // over
-            GridObject o1 = (neighBors.Main_1) ? neighBors.Main_1.GetLayerObject(Layer + 1, true, true) : null;
-            GridObject o2 = (neighBors.Main_2) ? neighBors.Main_2.GetLayerObject(Layer + 1, true, true) : null;
-            GridObject o3 = (neighBors.Main_3) ? neighBors.Main_3.GetLayerObject(Layer + 1, true, true) : null;
-            GridObject o4 = (neighBors.Main_4) ? neighBors.Main_4.GetLayerObject(Layer + 1, true, true) : null;
-            bool overBlocked1 = (o1 != null && !o1.Excluded);
-            bool overBlocked2 = (o2 != null && !o2.Excluded);
-            bool overBlocked3 = (o3 != null && !o3.Excluded);
-            bool overBlocked4 = (o4 != null && !o4.Excluded);
-            bool overBlocked = (overBlocked1 || overBlocked2 || overBlocked3 || overBlocked4);
-            if (overBlocked) return false;
+            // 性能优化：使用缓存的阻挡信息，避免重复调用GetLayerObject
+            if (rawOverBlockers != null && rawOverBlockers.Count > 0)
+            {
+                // 检查上方阻挡
+                foreach (var gCell in rawOverBlockers)
+                {
+                    if (gCell != null)
+                    {
+                        // 性能优化：复用静态缓存GridObject
+                        tempGridObject = gCell.GetLayerObject(Layer + 1, false, true);
+                        if (tempGridObject != null && !tempGridObject.Excluded)
+                        {
+                            return false; // 上方被阻挡
+                        }
+                    }
+                }
+            }
 
-            // left
-            GridObject l1 = (neighBors.Left_1) ? neighBors.Left_1.GetLayerObject(Layer, true, true) : null;
-            GridObject l2  = (neighBors.Left_2) ? neighBors.Left_2.GetLayerObject(Layer, true, true) : null;
-            bool leftBlocked1 = (l1 != null && !l1.Excluded);
-            bool leftBlocked2 = (l2 != null && !l2.Excluded);
-            bool leftBlocked = leftBlocked1 || leftBlocked2;
-            if (!leftBlocked) return true;
+            // 检查左侧阻挡
+            bool leftBlocked = false;
+            if (rawLeftBlockers != null && rawLeftBlockers.Count > 0)
+            {
+                foreach (var gCell in rawLeftBlockers)
+                {
+                    if (gCell != null)
+                    {
+                        tempGridObject = gCell.GetLayerObject(Layer, false, true);
+                        if (tempGridObject != null && !tempGridObject.Excluded)
+                        {
+                            leftBlocked = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!leftBlocked) return true; // 左侧有空间
 
-            // right
-            GridObject r1 = (neighBors.Right_1) ? neighBors.Right_1.GetLayerObject(Layer, true, true) : null;
-            GridObject r2 = (neighBors.Right_2) ? neighBors.Right_2.GetLayerObject(Layer, true, true) : null;
-            bool rightBlocked1 = (r1 != null && !r1.Excluded);
-            bool rightBlocked2 = (r2 != null && !r2.Excluded);
-            bool rightBlocked = rightBlocked1 || rightBlocked2;
-            if (!rightBlocked) return true;
+            // 检查右侧阻挡
+            bool rightBlocked = false;
+            if (rawRightBlockers != null && rawRightBlockers.Count > 0)
+            {
+                foreach (var gCell in rawRightBlockers)
+                {
+                    if (gCell != null)
+                    {
+                        tempGridObject = gCell.GetLayerObject(Layer, false, true);
+                        if (tempGridObject != null && !tempGridObject.Excluded)
+                        {
+                            rightBlocked = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!rightBlocked) return true; // 右侧有空间
 
+            // 如果左右都被阻挡，则不可填充
             return false;
         }
 
@@ -272,16 +324,25 @@ namespace Mkey
         private List<GridCell> GetOverBlockers()
         {
             NeighBors neighBors = ParentCell.Neighbors;
-            List<GridCell> blockers = new List<GridCell>();
-            GridObject bl = (neighBors.Main_1) ? neighBors.Main_1.GetLayerObject(Layer + 1, true, true) : null;
-            if (bl) blockers.Add(bl.ParentCell);
-            bl = (neighBors.Main_2) ? neighBors.Main_2.GetLayerObject(Layer + 1, true, true) : null;
-            if (bl) blockers.Add(bl.ParentCell);
-            bl = (neighBors.Main_3) ? neighBors.Main_3.GetLayerObject(Layer + 1, true, true) : null;
-            if (bl) blockers.Add(bl.ParentCell);
-            bl = (neighBors.Main_4) ? neighBors.Main_4.GetLayerObject(Layer + 1, true, true) : null;
-            if (bl) blockers.Add(bl.ParentCell);
-            return blockers;
+
+            // 性能优化：复用静态缓存集合，避免重复创建
+            tempBlockers.Clear();
+
+            // 性能优化：复用静态缓存GridObject，避免重复创建
+            tempGridObject = (neighBors.Main_1) ? neighBors.Main_1.GetLayerObject(Layer + 1, true, true) : null;
+            if (tempGridObject) tempBlockers.Add(tempGridObject.ParentCell);
+
+            tempGridObject = (neighBors.Main_2) ? neighBors.Main_2.GetLayerObject(Layer + 1, true, true) : null;
+            if (tempGridObject) tempBlockers.Add(tempGridObject.ParentCell);
+
+            tempGridObject = (neighBors.Main_3) ? neighBors.Main_3.GetLayerObject(Layer + 1, true, true) : null;
+            if (tempGridObject) tempBlockers.Add(tempGridObject.ParentCell);
+
+            tempGridObject = (neighBors.Main_4) ? neighBors.Main_4.GetLayerObject(Layer + 1, true, true) : null;
+            if (tempGridObject) tempBlockers.Add(tempGridObject.ParentCell);
+
+            // 返回新列表副本，避免外部修改影响缓存
+            return new List<GridCell>(tempBlockers);
         }
 
         /// <summary>
@@ -290,12 +351,19 @@ namespace Mkey
         private List<GridCell> GetLeftBlockers()
         {
             NeighBors neighBors = ParentCell.Neighbors;
-            List<GridCell> blockers = new List<GridCell>();
-            GridObject bl = (neighBors.Left_1) ? neighBors.Left_1.GetLayerObject(Layer, true, true) : null;
-            if (bl) blockers.Add(bl.ParentCell);
-            bl = (neighBors.Left_2) ? neighBors.Left_2.GetLayerObject(Layer, true, true) : null;
-            if (bl) blockers.Add(bl.ParentCell);
-            return blockers;
+
+            // 性能优化：复用静态缓存集合，避免重复创建
+            tempBlockers.Clear();
+
+            // 性能优化：复用静态缓存GridObject，避免重复创建
+            tempGridObject = (neighBors.Left_1) ? neighBors.Left_1.GetLayerObject(Layer, true, true) : null;
+            if (tempGridObject) tempBlockers.Add(tempGridObject.ParentCell);
+
+            tempGridObject = (neighBors.Left_2) ? neighBors.Left_2.GetLayerObject(Layer, true, true) : null;
+            if (tempGridObject) tempBlockers.Add(tempGridObject.ParentCell);
+
+            // 返回新列表副本，避免外部修改影响缓存
+            return new List<GridCell>(tempBlockers);
         }
 
         /// <summary>
@@ -304,12 +372,19 @@ namespace Mkey
         private List<GridCell> GetRightBlockers()
         {
             NeighBors neighBors = ParentCell.Neighbors;
-            List<GridCell> blockers = new List<GridCell>();
-            GridObject bl = (neighBors.Right_1) ? neighBors.Right_1.GetLayerObject(Layer, true, true) : null;
-            if (bl) blockers.Add(bl.ParentCell);
-            bl = (neighBors.Right_2) ? neighBors.Right_2.GetLayerObject(Layer, true, true) : null;
-            if (bl) blockers.Add(bl.ParentCell);
-            return blockers;
+
+            // 性能优化：复用静态缓存集合，避免重复创建
+            tempBlockers.Clear();
+
+            // 性能优化：复用静态缓存GridObject，避免重复创建
+            tempGridObject = (neighBors.Right_1) ? neighBors.Right_1.GetLayerObject(Layer, true, true) : null;
+            if (tempGridObject) tempBlockers.Add(tempGridObject.ParentCell);
+
+            tempGridObject = (neighBors.Right_2) ? neighBors.Right_2.GetLayerObject(Layer, true, true) : null;
+            if (tempGridObject) tempBlockers.Add(tempGridObject.ParentCell);
+
+            // 返回新列表副本，避免外部修改影响缓存
+            return new List<GridCell>(tempBlockers);
         }
 
         /// <summary>
@@ -335,20 +410,35 @@ namespace Mkey
             return null;
         }
 
+        // 性能优化：静态缓存，避免重复调用GetComponentsInChildren
+        private static MahjongTile[] cachedTiles = null;
+        private static int lastCacheFrame = -1;
+
         /// <summary>
-        /// 获取指定格子上占用的麻将牌
+        /// 获取指定格子上占用的麻将牌（优化版本，缓存GetComponentsInChildren结果）
         /// </summary>
         /// <param name="matchGrid"></param>
         /// <param name="gridCell"></param>
         /// <returns></returns>
         public static MahjongTile GetOccupied(MatchGrid matchGrid, GridCell gridCell)
         {
-            MahjongTile[] source = matchGrid.Parent.GetComponentsInChildren<MahjongTile>();
-
-            foreach (var item in source)
+            // 性能优化：缓存GetComponentsInChildren结果，避免每帧重复调用
+            int currentFrame = Time.frameCount;
+            if (cachedTiles == null || currentFrame != lastCacheFrame)
             {
-                List<GridCell> occupiedCells = item.GetOccupiedCells();
-                if (occupiedCells.Contains(gridCell)) return item;
+                cachedTiles = matchGrid.Parent.GetComponentsInChildren<MahjongTile>();
+                lastCacheFrame = currentFrame;
+            }
+
+            // 性能优化：使用for循环替代foreach，减少隐式迭代器分配
+            for (int i = 0; i < cachedTiles.Length; i++)
+            {
+                var item = cachedTiles[i];
+                if (item != null)
+                {
+                    List<GridCell> occupiedCells = item.GetOccupiedCells();
+                    if (occupiedCells.Contains(gridCell)) return item;
+                }
             }
             return null;
         }
@@ -359,7 +449,7 @@ namespace Mkey
         /// <param name="exclude"></param>
         public void SetExcluded(bool exclude)
         {
-            if(exclude != Excluded)
+            if (exclude != Excluded)
             {
                 Excluded = exclude;
             }
@@ -371,14 +461,14 @@ namespace Mkey
         public void HighlightHint(bool highlight)
         {
             if (highlightedHint == highlight) return;
-            bool useColor = (hintPrefab== null);
-            if (useColor) 
+            bool useColor = (hintPrefab == null);
+            if (useColor)
             {
                 if (highlight)
                 {
-                  //  SRenderer.color = new Color(1f, 0.856f, 0.504f);
-                   // leftBorder.color = new Color(1f, 0.856f, 0.504f);
-                     SRenderer.color = new Color(1f, 1f, 1f);
+                    //  SRenderer.color = new Color(1f, 0.856f, 0.504f);
+                    // leftBorder.color = new Color(1f, 0.856f, 0.504f);
+                    SRenderer.color = new Color(1f, 1f, 1f);
                     leftBorder.color = new Color(1f, 1f, 1f);
                 }
                 else
@@ -400,7 +490,7 @@ namespace Mkey
                 else
                 {
                     GameObject old = hintObject;
-                    if(old) Destroy(old);
+                    if (old) Destroy(old);
                 }
             }
             highlightedHint = highlight;
@@ -419,7 +509,7 @@ namespace Mkey
                 if (highlight)
                 {
                     //SRenderer.color = new Color(1f, 0.856f, 0.504f);
-                  //  leftBorder.color = new Color(1f, 0.856f, 0.504f);
+                    //  leftBorder.color = new Color(1f, 0.856f, 0.504f);
 
 
                     SRenderer.color = new Color(1f, 1f, 1f);
@@ -477,14 +567,14 @@ namespace Mkey
         /// </summary>
         private int GetRenderOrder(bool onFront)
         {
-            int layerOrder =(onFront)? 20000 : Layer * 2000;
+            int layerOrder = (onFront) ? 20000 : Layer * 2000;
 
             int addOrder = (ParentCell) ? ParentCell.AddRenderOrder : 0;
 
             if (onFront)
                 return SortingOrder.MahjongTileToFront + addOrder + layerOrder;
             else
-               return SortingOrder.MahjongTile + addOrder + layerOrder;
+                return SortingOrder.MahjongTile + addOrder + layerOrder;
         }
 
         /// <summary>
@@ -493,7 +583,7 @@ namespace Mkey
         private void EnableLeftBorder()
         {
             MahjongTile bL = GetBottomLeftBlocker();
-            if(bL)
+            if (bL)
             {
                 int rO = bL.GetRenderOrder(false);
                 leftBorder.sortingOrder = rO + 1;
@@ -539,14 +629,14 @@ namespace Mkey
             int renderOrder_L = leftBorder.enabled ? leftBorder.sortingOrder : renderOrder;
             renderOrder = (renderOrder_L > renderOrder) ? renderOrder_L + 2 : renderOrder + 2;
 
-            if (constructLineHor) 
-            { 
+            if (constructLineHor)
+            {
                 constructLineHor.gameObject.SetActive(show);
                 constructLineHor.sortingOrder = renderOrder;
                 constructLineHor.color = new Color(constructLineHor.color.r, constructLineHor.color.g, constructLineHor.color.b, alpha);
             }
-            if (constructLineVert) 
-            { 
+            if (constructLineVert)
+            {
                 constructLineVert.gameObject.SetActive(show);
                 constructLineVert.sortingOrder = renderOrder;
                 constructLineVert.color = new Color(constructLineHor.color.r, constructLineHor.color.g, constructLineHor.color.b, alpha);
@@ -558,8 +648,8 @@ namespace Mkey
                 constructLayerText.text = (Layer + 1).ToString();
                 constructLayerText.color = new Color(constructLayerText.color.r, constructLayerText.color.g, constructLayerText.color.b, alpha);
                 SpriteText rend = constructLayerText.GetComponent<SpriteText>();
-                if (rend) 
-                { 
+                if (rend)
+                {
                     rend.SortingOrder = renderOrder;
                 }
             }
@@ -643,6 +733,21 @@ namespace Mkey
             {
                 if (goldSprite) SRenderer.sprite = goldSprite;
                 if (leftBorder) leftBorder.enabled = false;
+                qian_Skeleton.gameObject.SetActive(true);
+                //GameObject hou_Skeleton = Instantiate(qian_Skeleton, insGoldTrans);
+                SkeletonAnimation skeletonAnimation = qian_Skeleton.GetComponent<SkeletonAnimation>();
+
+                skeletonAnimation.gameObject.transform.localPosition = new Vector3(-0.3f, -1.68f, 0);
+                skeletonAnimation.gameObject.transform.localScale = new Vector3(1f, 0.85f, 0);
+                MeshRenderer m_Mr = skeletonAnimation.GetComponent<MeshRenderer>();
+                m_Mr.sortingOrder = SRenderer.sortingOrder + 1;
+
+                //SkeletonAnimation skeletonAnimation1 = hou_Skeleton.GetComponent<SkeletonAnimation>();
+                //skeletonAnimation1.gameObject.transform.localPosition = new Vector3(0, -1.73f, 0);
+                //skeletonAnimation1.gameObject.transform.localScale = new Vector3(0.8f, 0.75f, 0);
+                //skeletonAnimation1.state.SetAnimation(0, "2", true);
+                //MeshRenderer m_Mr1 = skeletonAnimation1.GetComponent<MeshRenderer>();
+                //m_Mr1.sortingOrder = SRenderer.sortingOrder - 1;
             }
             // 如需恢复普通麻将，可在此处加else逻辑
         }
@@ -667,5 +772,45 @@ namespace Mkey
 
         // 记录抖动原点，防止多次Shake累计偏移
         private Vector3 shakeOriginPos = Vector3.zero;
+        public void PlayNbroke(Action finish)
+        {
+            Lie.sortingOrder = SRenderer.sortingOrder + 1;
+            if (hintObject)
+            {
+                Destroy(hintObject);
+            } // 提示对象
+            if (selectObject)
+            {
+                Destroy(selectObject);
+            }
+            m_TileAnimController.PlayNbroke(() =>
+            {
+                finish?.Invoke();
+            });
+        }
+
+        public void PlayGbroke(Action finish)
+        {
+            Lie.sortingOrder = SRenderer.sortingOrder + 1;
+            if (hintObject)
+            {
+                Destroy(hintObject);
+            } // 提示对象
+            if (selectObject)
+            {
+                Destroy(selectObject);
+            }
+            m_TileAnimController.PlayNbroke(() =>
+            {
+                finish?.Invoke();
+            });
+        }
+        public void PlayShak(Action finish)
+        {
+            m_TileAnimController.PlayShak(() =>
+            {
+                finish?.Invoke();
+            });
+        }
     }
 }

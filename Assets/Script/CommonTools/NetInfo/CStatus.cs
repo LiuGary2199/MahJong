@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 
  * 常量配置
  * 
@@ -192,6 +192,7 @@ public class CStatus
     /// </summary>
     public static string So_CosmicGetTorpor= "mg_UpdataDayReward";
 
+    public static string mg_OnMahjongClick = "mg_OnMahjongClick";
     #endregion
 
     #region 动态加载资源的路径

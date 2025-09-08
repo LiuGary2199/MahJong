@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEditor;
@@ -38,11 +38,7 @@ public class ScamExplain : MonoBehaviour
         CrabDeity.RestartLevel();
         m_PeartCrack = 0;
     }
-    public void HandScam()
-    {
-        CrabDeity.CompleteAndLoadNextLevel();
-        m_PeartCrack = 0;
-    }
+
     private void OnComboUpdate(KeyValuesUpdate kv)
     {
         m_PeartCrack += 1;

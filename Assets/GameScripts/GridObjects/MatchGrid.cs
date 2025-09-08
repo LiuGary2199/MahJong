@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Mkey
@@ -69,6 +69,46 @@ namespace Mkey
         }
 
         /// <summary>
+        /// 预加载专用构造函数，只创建网格结构，不创建麻将牌
+        /// </summary>
+        public MatchGrid(LevelConstructSet lcSet, GameObjectsSet goSet, Transform parent, GameMode gMode, bool forPreload)
+        {
+            this.LcSet = lcSet;
+            this.Parent = parent;
+            this.gMode = gMode;
+            Debug.Log("new preload grid " + lcSet.name);
+
+            vertSize = lcSet.VertSize;
+            horSize = lcSet.HorSize;
+            this.goSet = goSet;
+            prefab = goSet.gridCellPrefab;
+            cellSize = prefab.GetComponent<BoxCollider2D>().size;
+
+            float deltaX = lcSet.DistX;
+            float deltaY = lcSet.DistY;
+            SetScale(lcSet.Scale);
+
+            Cells = new List<GridCell>(vertSize * horSize);
+            Rows = new List<Row<GridCell>>(vertSize);
+
+            yOffset = 0;
+            xStep = (cellSize.x + deltaX);
+            yStep = (cellSize.y + deltaY);
+
+            cOffset = (1 - horSize) * xStep / 2.0f; // offset from center by x-axe
+            yStart = (vertSize - 1) * yStep / 2.0f;
+
+            //instantiate cells
+            for (int i = 0; i < vertSize; i++)
+            {
+                AddRow();
+            }
+            InitCells();
+            Debug.Log("Created Preload Grid Cells: " + Cells.Count);
+            // 不调用SetObjectsData，麻将牌将在异步方法中创建
+        }
+
+        /// <summary>
         /// 重建网格，重新分配格子和对象
         /// </summary>
         public void Rebuild(GameObjectsSet mSet, GameMode gMode)
@@ -114,7 +154,7 @@ namespace Mkey
 
                 for (int j = 0; j < row.Length; j++)
                 {
-                    Vector3 pos = new (j * xStep + cOffset, yStart - i * yStep, 0);
+                    Vector3 pos = new(j * xStep + cOffset, yStart - i * yStep, 0);
 
                     if (tempCells != null && cellCounter < tempCells.Count)
                     {
@@ -290,7 +330,7 @@ namespace Mkey
 
         public GridCell this[int index0, int index1]
         {
-            get {if (ok(index0, index1)) { return Rows[index0][index1]; } else { return null; } }
+            get { if (ok(index0, index1)) { return Rows[index0][index1]; } else { return null; } }
             set { if (ok(index0, index1)) { Rows[index0][index1] = value; } else { } }
         }
 
@@ -366,7 +406,7 @@ namespace Mkey
 
         }
 
-        public MahjongTile [] GetTiles()
+        public MahjongTile[] GetTiles()
         {
             return Parent.GetComponentsInChildren<MahjongTile>(true);
         }
@@ -375,26 +415,27 @@ namespace Mkey
         #region fill sprites
         public void SetMahjongSprites(System.Action onComplete = null)
         {
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             Debug.Log("SetMahjongSprites 方法被调用，tiles数量: " + (tiles != null ? tiles.Count : -1));
-            #endif
-            if (tiles == null || tiles.Count == 0) {
-                #if UNITY_EDITOR
+#endif
+            if (tiles == null || tiles.Count == 0)
+            {
+#if UNITY_EDITOR
                 Debug.LogError("SetMahjongSprites tiles为空，直接return，回调不会被调用！");
-                #endif
+#endif
                 onComplete?.Invoke();
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 Debug.Log("SetMahjongSprites onComplete 已调用（tiles为空分支）");
-                #endif
+#endif
                 return;
             }
 
             // set majong sprites
             var sprites = goSet.GetRandomPairs(tiles.Count / 2, LcSet.fillType);
             var tT = tiles; // 复用tiles本身，避免多次new List
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             Debug.Log("set sprites, tiles count: " + tiles.Count + "; sprites pairs count: " + sprites.Count + "; " + LcSet.fillType);
-            #endif
+#endif
             // 第一关新手引导特殊排列
             if (GameLevelHolder.CurrentLevel == 0)
             {
@@ -409,20 +450,30 @@ namespace Mkey
             }
             // 1 type - get random from free to fill tiles
             bool failed = false;
+
+            // 性能优化：将集合声明在循环外，避免重复创建
+            List<MahjongTile> freeTiles = new List<MahjongTile>();
+
             for (int i = 0; i < tT.Count; i += 2)
             {
-                List<MahjongTile> freeTiles = GetFreeToFillTiles(tiles, true, false);      // not sorted by layer
-                if(freeTiles.Count < 5) freeTiles = GetFreeToFillTiles(tiles, true, true); // avoid last error (tile 0 over tile)
-                if(freeTiles.Count == 1)
+                // 性能优化：复用集合，每次循环前清空
+                freeTiles.Clear();
+                freeTiles.AddRange(GetFreeToFillTiles(tiles, true, false));      // not sorted by layer
+                if (freeTiles.Count < 5)
+                {
+                    freeTiles.Clear();
+                    freeTiles.AddRange(GetFreeToFillTiles(tiles, true, true)); // avoid last error (tile 0 over tile)
+                }
+                if (freeTiles.Count == 1)
                 {
                     failed = true;
-                    #if UNITY_EDITOR
+#if UNITY_EDITOR
                     Debug.Log("SetMahjongSprites onComplete 即将被调用（freeTiles.Count==1分支）");
-                    #endif
+#endif
                     onComplete?.Invoke();
-                    #if UNITY_EDITOR
+#if UNITY_EDITOR
                     Debug.Log("SetMahjongSprites onComplete 已调用（freeTiles.Count==1分支）");
-                    #endif
+#endif
                     return;
                 }
                 MahjongTile t1 = freeTiles[0];
@@ -433,14 +484,15 @@ namespace Mkey
                 t1.SetSprite(s.sprite_1);
                 t2.SetSprite(s.sprite_2);
             }
-            if (!failed) {
-                #if UNITY_EDITOR
+            if (!failed)
+            {
+#if UNITY_EDITOR
                 Debug.Log("SetMahjongSprites onComplete 即将被调用（1type分支）");
-                #endif
+#endif
                 onComplete?.Invoke();
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 Debug.Log("SetMahjongSprites onComplete 已调用（1type分支）");
-                #endif
+#endif
                 return;
             }
 
@@ -450,57 +502,62 @@ namespace Mkey
                 tiles.ForEach((t) => { t.SetExcluded(false); });
                 for (int i = 0; i < tT.Count; i += 2)
                 {
-                    List<MahjongTile>  freeTiles = GetFreeToFillTiles(tiles, true, true); // reverse sorted
+                    // 性能优化：复用集合，每次循环前清空
+                    freeTiles.Clear();
+                    freeTiles.AddRange(GetFreeToFillTiles(tiles, true, true)); // reverse sorted
                     if (freeTiles.Count == 1)
                     {
                         failed = true;
-                        #if UNITY_EDITOR
+#if UNITY_EDITOR
                         Debug.Log("SetMahjongSprites onComplete 即将被调用（2type freeTiles.Count==1分支）");
-                        #endif
+#endif
                         onComplete?.Invoke();
-                        #if UNITY_EDITOR
+#if UNITY_EDITOR
                         Debug.Log("SetMahjongSprites onComplete 已调用（2type freeTiles.Count==1分支）");
-                        #endif
+#endif
                         return;
                     }
                     MahjongTile t1 = freeTiles[0];
                     MahjongTile t2 = freeTiles[freeTiles.Count - 1];
                     freeTiles[0].SetExcluded(true);
                     freeTiles[1].SetExcluded(true);
-                    SpritesPair s = sprites[i/2];
+                    SpritesPair s = sprites[i / 2];
                     t1.SetSprite(s.sprite_1);
                     t2.SetSprite(s.sprite_2);
                 }
             }
-            if (!failed) {
-                #if UNITY_EDITOR
+            if (!failed)
+            {
+#if UNITY_EDITOR
                 Debug.Log("SetMahjongSprites onComplete 即将被调用（2type分支）");
-                #endif
+#endif
                 onComplete?.Invoke();
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 Debug.Log("SetMahjongSprites onComplete 已调用（2type分支）");
-                #endif
+#endif
                 return;
             }
 
             // 3 type - get 2 tiles from most top layers
             if (failed)
             {
-                tiles.ForEach((t)=> { t.SetExcluded(false); });
+                tiles.ForEach((t) => { t.SetExcluded(false); });
                 failed = false;
                 for (int i = 0; i < tT.Count; i += 2)
                 {
-                    List<MahjongTile> freeTiles = GetFreeToFillTiles(tiles, true, true); // reverse sorted
+                    // 性能优化：复用集合，每次循环前清空
+                    freeTiles.Clear();
+                    freeTiles.AddRange(GetFreeToFillTiles(tiles, true, true)); // reverse sorted
                     if (freeTiles.Count == 1)
                     {
                         failed = true;
-                        #if UNITY_EDITOR
+#if UNITY_EDITOR
                         Debug.Log("SetMahjongSprites onComplete 即将被调用（3type freeTiles.Count==1分支）");
-                        #endif
+#endif
                         onComplete?.Invoke();
-                        #if UNITY_EDITOR
+#if UNITY_EDITOR
                         Debug.Log("SetMahjongSprites onComplete 已调用（3type freeTiles.Count==1分支）");
-                        #endif
+#endif
                         return;
                     }
                     MahjongTile t1 = freeTiles[0];
@@ -512,214 +569,239 @@ namespace Mkey
                     t2.SetSprite(s.sprite_2);
                 }
             }
-            if (!failed) {
-                #if UNITY_EDITOR
+            if (!failed)
+            {
+#if UNITY_EDITOR
                 Debug.Log("SetMahjongSprites onComplete 即将被调用（3type分支）");
-                #endif
+#endif
                 onComplete?.Invoke();
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 Debug.Log("SetMahjongSprites onComplete 已调用（3type分支）");
-                #endif
+#endif
                 return;
             }
             else Debug.LogError("Fill failed, make changes in game board.");
             // 在所有麻将牌设置完毕后调用回调
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             Debug.Log("SetMahjongSprites onComplete 即将被调用（结尾分支）");
-            #endif
+#endif
             onComplete?.Invoke();
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             Debug.Log("SetMahjongSprites onComplete 已调用（结尾分支）");
-            #endif
+#endif
             // 修复：设置完麻将牌后重置所有麻将牌的渲染顺序
             foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
             {
                 tile.SetToFront(false);
             }
         }
-/*
-        public void SetMahjongSprites(System.Action onComplete = null)
-        {
-            Debug.Log("SetMahjongSprites 优化版被调用，tiles数量: " + (tiles != null ? tiles.Count : -1));
-            if (tiles == null || tiles.Count == 0) {
-                Debug.LogError("SetMahjongSprites tiles为空，直接return，回调不会被调用！");
-                onComplete?.Invoke();
-                Debug.Log("SetMahjongSprites onComplete 已调用（tiles为空分支）");
-                return;
-            }
-            // tiles数量必须为偶数
-            if (tiles.Count % 2 != 0)
-            {
-                Debug.LogError($"tiles数量为奇数({tiles.Count})，分配必然失败！");
-                onComplete?.Invoke();
-                return;
-            }
-            // 第一关新手引导特殊排列
-            if (GameLevelHolder.CurrentLevel == 0)
-            {
-                SetTutorialSprites(onComplete);
-                return;
-            }
-            // 第二关新手引导特殊排列
-            if (GameLevelHolder.CurrentLevel == 1)
-            {
-                SetMahjongSpritesForLevel2(onComplete);
-                return;
-            }
-            // 其它关卡采用高效分配及智能兜底
-            List<SpritesPair> spritesOpt = goSet.GetRandomPairs(tiles.Count / 2, LcSet.fillType);
-            bool success = false;
-            int tryCount = 0;
-            while (!success && tryCount < 10)
-            {
-                tryCount++;
-                // 分配前彻底重置
-                tiles.ForEach(t => { t.SetExcluded(false); t.SetSprite(null); });
-                List<MahjongTile> freeTiles = GetFreeToFillTiles(tiles, true, false);
-                bool failed = false;
-                for (int i = 0; i < spritesOpt.Count; i++)
+        /*
+                public void SetMahjongSprites(System.Action onComplete = null)
                 {
-                    if (freeTiles.Count < 2) { failed = true; break; }
-                    MahjongTile t1 = freeTiles[0];
-                    MahjongTile t2 = freeTiles[1];
-                    t1.SetSprite(spritesOpt[i].sprite_1);
-                    t2.SetSprite(spritesOpt[i].sprite_2);
-                    t1.SetExcluded(true);
-                    t2.SetExcluded(true);
-                    freeTiles.Remove(t1);
-                    freeTiles.Remove(t2);
-                }
-                if (!failed) success = true;
-                else
-                {
-                    // 失败就重排sprites
-                    System.Random rng = new System.Random();
-                    int n = spritesOpt.Count;
-                    while (n > 1)
-                    {
-                        n--;
-                        int k = rng.Next(n + 1);
-                        var value = spritesOpt[k];
-                        spritesOpt[k] = spritesOpt[n];
-                        spritesOpt[n] = value;
+                    Debug.Log("SetMahjongSprites 优化版被调用，tiles数量: " + (tiles != null ? tiles.Count : -1));
+                    if (tiles == null || tiles.Count == 0) {
+                        Debug.LogError("SetMahjongSprites tiles为空，直接return，回调不会被调用！");
+                        onComplete?.Invoke();
+                        Debug.Log("SetMahjongSprites onComplete 已调用（tiles为空分支）");
+                        return;
                     }
-                }
-            }
-            if (!success)
-            {
-                Debug.LogWarning($"分配失败，采用智能兜底分配，tiles.Count={tiles.Count}, spritesOpt.Count={spritesOpt.Count}");
-                // 智能兜底分配算法
-                int bestMatchCount = -1;
-                List<Sprite> bestSprites = null;
-                for (int tryIdx = 0; tryIdx < 20; tryIdx++)
-                {
-                    // 1. 生成所有成对Sprite并打乱
-                    List<Sprite> allSprites = new List<Sprite>();
-                    for (int i = 0; i < spritesOpt.Count; i++)
+                    // tiles数量必须为偶数
+                    if (tiles.Count % 2 != 0)
                     {
-                        allSprites.Add(spritesOpt[i].sprite_1);
-                        allSprites.Add(spritesOpt[i].sprite_2);
+                        Debug.LogError($"tiles数量为奇数({tiles.Count})，分配必然失败！");
+                        onComplete?.Invoke();
+                        return;
                     }
-                    // 洗牌
-                    System.Random rng = new System.Random();
-                    int n = allSprites.Count;
-                    while (n > 1)
+                    // 第一关新手引导特殊排列
+                    if (GameLevelHolder.CurrentLevel == 0)
                     {
-                        n--;
-                        int k = rng.Next(n + 1);
-                        var value = allSprites[k];
-                        allSprites[k] = allSprites[n];
-                        allSprites[n] = value;
+                        SetTutorialSprites(onComplete);
+                        return;
                     }
-                    // 2. 依次分配到tiles
-                    tiles.ForEach(t => { t.SetExcluded(false); t.SetSprite(null); });
-                    for (int i = 0; i < tiles.Count; i++)
+                    // 第二关新手引导特殊排列
+                    if (GameLevelHolder.CurrentLevel == 1)
                     {
-                        tiles[i].SetSprite(allSprites[i]);
+                        SetMahjongSpritesForLevel2(onComplete);
+                        return;
                     }
-                    // 3. 统计当前分配下的可消对数
-                    int matchCount = 0;
-                    try
+                    // 其它关卡采用高效分配及智能兜底
+                    List<SpritesPair> spritesOpt = goSet.GetRandomPairs(tiles.Count / 2, LcSet.fillType);
+                    bool success = false;
+                    int tryCount = 0;
+                    while (!success && tryCount < 10)
                     {
-                        var possibleMatches = new PossibleMatches(tiles.FindAll(t => t != null && t.IsFreeToMatch()));
-                        matchCount = possibleMatches.Count;
+                        tryCount++;
+                        // 分配前彻底重置
+                        tiles.ForEach(t => { t.SetExcluded(false); t.SetSprite(null); });
+                        List<MahjongTile> freeTiles = GetFreeToFillTiles(tiles, true, false);
+                        bool failed = false;
+                        for (int i = 0; i < spritesOpt.Count; i++)
+                        {
+                            if (freeTiles.Count < 2) { failed = true; break; }
+                            MahjongTile t1 = freeTiles[0];
+                            MahjongTile t2 = freeTiles[1];
+                            t1.SetSprite(spritesOpt[i].sprite_1);
+                            t2.SetSprite(spritesOpt[i].sprite_2);
+                            t1.SetExcluded(true);
+                            t2.SetExcluded(true);
+                            freeTiles.Remove(t1);
+                            freeTiles.Remove(t2);
+                        }
+                        if (!failed) success = true;
+                        else
+                        {
+                            // 失败就重排sprites
+                            System.Random rng = new System.Random();
+                            int n = spritesOpt.Count;
+                            while (n > 1)
+                            {
+                                n--;
+                                int k = rng.Next(n + 1);
+                                var value = spritesOpt[k];
+                                spritesOpt[k] = spritesOpt[n];
+                                spritesOpt[n] = value;
+                            }
+                        }
                     }
-                    catch { matchCount = 0; }
-                    // 4. 记录最优分配
-                    if (matchCount > bestMatchCount)
+                    if (!success)
                     {
-                        bestMatchCount = matchCount;
-                        bestSprites = new List<Sprite>(allSprites);
+                        Debug.LogWarning($"分配失败，采用智能兜底分配，tiles.Count={tiles.Count}, spritesOpt.Count={spritesOpt.Count}");
+                        // 智能兜底分配算法
+                        int bestMatchCount = -1;
+                        List<Sprite> bestSprites = null;
+                        for (int tryIdx = 0; tryIdx < 20; tryIdx++)
+                        {
+                            // 1. 生成所有成对Sprite并打乱
+                            List<Sprite> allSprites = new List<Sprite>();
+                            for (int i = 0; i < spritesOpt.Count; i++)
+                            {
+                                allSprites.Add(spritesOpt[i].sprite_1);
+                                allSprites.Add(spritesOpt[i].sprite_2);
+                            }
+                            // 洗牌
+                            System.Random rng = new System.Random();
+                            int n = allSprites.Count;
+                            while (n > 1)
+                            {
+                                n--;
+                                int k = rng.Next(n + 1);
+                                var value = allSprites[k];
+                                allSprites[k] = allSprites[n];
+                                allSprites[n] = value;
+                            }
+                            // 2. 依次分配到tiles
+                            tiles.ForEach(t => { t.SetExcluded(false); t.SetSprite(null); });
+                            for (int i = 0; i < tiles.Count; i++)
+                            {
+                                tiles[i].SetSprite(allSprites[i]);
+                            }
+                            // 3. 统计当前分配下的可消对数
+                            int matchCount = 0;
+                            try
+                            {
+                                var possibleMatches = new PossibleMatches(tiles.FindAll(t => t != null && t.IsFreeToMatch()));
+                                matchCount = possibleMatches.Count;
+                            }
+                            catch { matchCount = 0; }
+                            // 4. 记录最优分配
+                            if (matchCount > bestMatchCount)
+                            {
+                                bestMatchCount = matchCount;
+                                bestSprites = new List<Sprite>(allSprites);
+                            }
+                        }
+                        // 5. 用最优分配方案赋值
+                        if (bestSprites != null)
+                        {
+                            for (int i = 0; i < tiles.Count; i++)
+                            {
+                                tiles[i].SetSprite(bestSprites[i]);
+                            }
+                            Debug.Log($"智能兜底分配完成，最优可消对数：{bestMatchCount}");
+                        }
+                        else
+                        {
+                            Debug.LogError("智能兜底分配失败，仍有白图风险！");
+                        }
                     }
-                }
-                // 5. 用最优分配方案赋值
-                if (bestSprites != null)
-                {
-                    for (int i = 0; i < tiles.Count; i++)
+                    // 分配后检查所有tile
+                    foreach (var tile in tiles)
                     {
-                        tiles[i].SetSprite(bestSprites[i]);
+                        if (tile.SRenderer.sprite == null)
+                            Debug.LogError($"分配后有白图，tile: {tile.name}");
                     }
-                    Debug.Log($"智能兜底分配完成，最优可消对数：{bestMatchCount}");
-                }
-                else
-                {
-                    Debug.LogError("智能兜底分配失败，仍有白图风险！");
-                }
-            }
-            // 分配后检查所有tile
-            foreach (var tile in tiles)
-            {
-                if (tile.SRenderer.sprite == null)
-                    Debug.LogError($"分配后有白图，tile: {tile.name}");
-            }
-            Debug.Log("SetMahjongSprites onComplete 即将被调用（优化分配分支）");
-            onComplete?.Invoke();
-            Debug.Log("SetMahjongSprites onComplete 已调用（优化分配分支）");
-            foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
-                tile.SetToFront(false);
-        }*/
+                    Debug.Log("SetMahjongSprites onComplete 即将被调用（优化分配分支）");
+                    onComplete?.Invoke();
+                    Debug.Log("SetMahjongSprites onComplete 已调用（优化分配分支）");
+                    foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
+                        tile.SetToFront(false);
+                }*/
 
-        // 协程分帧分配麻将图片，保持高可玩性
-        public System.Collections.IEnumerator SetMahjongSpritesAsync(System.Action onComplete, int yieldStep = 2)
+        /// <summary>
+        /// 预加载专用的图片分配方法
+        /// </summary>
+        public System.Collections.IEnumerator SetMahjongSpritesForPreloadAsync(int targetLevel, System.Action onComplete, int yieldStep = 1)
         {
-            // 第一关新手引导特殊排列
-            if (GameLevelHolder.CurrentLevel == 0)
-            {
-                SetTutorialSprites(onComplete);
-                yield break;
-            }
-            // 第二关新手引导特殊排列
-            if (GameLevelHolder.CurrentLevel == 1)
-            {
-                SetMahjongSpritesForLevel2(onComplete);
-                yield break;
-            }
+            float startTime = Time.realtimeSinceStartup;
+            Debug.Log($"[预加载性能] 开始预加载图片分配，麻将牌数量: {tiles.Count}");
+
+            //// 预加载永远不会加载新手引导关，直接使用普通关卡的图片分配逻辑
+            //for (int i = 0; i < tiles.Count; i++)
+            //{
+            //    tiles[i].PlayLoad();
+            //}
+
+            // 获取图片对，分帧处理
+            float spriteStartTime = Time.realtimeSinceStartup;
             var sprites = goSet.GetRandomPairs(tiles.Count / 2, LcSet.fillType);
+            yield return null; // 分帧：获取图片对后暂停
+            yield return null; // 额外分帧：确保完全平滑
+            float spriteTime = Time.realtimeSinceStartup - spriteStartTime;
+            Debug.Log($"[预加载性能] 获取图片对完成，耗时: {spriteTime:F3}秒，图片对数量: {sprites.Count}");
+
             var tT = tiles;
             bool failed = false;
             int yieldCounter = 0;
+
             // 1 type - get random from free to fill tiles
+            float strategy1StartTime = Time.realtimeSinceStartup;
+            Debug.Log("[预加载性能] 开始策略1分配");
             for (int i = 0; i < tT.Count; i += 2)
             {
+                // 分帧：每次循环都暂停
+                yield return null; // 每次循环都暂停
+
                 List<MahjongTile> freeTiles = GetFreeToFillTiles(tiles, true, false);      // not sorted by layer
-                if(freeTiles.Count < 5) freeTiles = GetFreeToFillTiles(tiles, true, true); // avoid last error (tile 0 over tile)
-                if(freeTiles.Count == 1)
+                if (freeTiles.Count < 5) freeTiles = GetFreeToFillTiles(tiles, true, true); // avoid last error (tile 0 over tile)
+                if (freeTiles.Count == 1)
                 {
                     failed = true;
+                    Debug.Log("[预加载性能] 策略1失败，可用麻将牌不足");
                     onComplete?.Invoke();
                     yield break;
                 }
                 MahjongTile t1 = freeTiles[0];
                 MahjongTile t2 = freeTiles[1];
                 freeTiles[0].SetExcluded(true);
+                yield return null; // 设置排除状态后暂停
                 freeTiles[1].SetExcluded(true);
+                yield return null; // 设置排除状态后暂停
                 SpritesPair s = sprites[i / 2];
                 t1.SetSprite(s.sprite_1);
+                yield return null; // 设置第一个图片后暂停
                 t2.SetSprite(s.sprite_2);
+
+                // 平滑优化：设置图片后立即暂停一帧
+                yield return null;
+
                 yieldCounter++;
+                // 每分配一对麻将牌就暂停一帧，减少卡顿
                 if (yieldCounter % yieldStep == 0) yield return null;
             }
-            if (!failed) {
+            if (!failed)
+            {
+                float strategy1Time = Time.realtimeSinceStartup - strategy1StartTime;
+                Debug.Log($"[预加载性能] 策略1分配成功，耗时: {strategy1Time:F3}秒");
                 onComplete?.Invoke();
                 foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
                 {
@@ -727,31 +809,53 @@ namespace Mkey
                 }
                 yield break;
             }
+
+            // 分帧：策略1失败后暂停
+            yield return null;
+            yield return null; // 额外分帧
+
             // 2 type -  get first from most top layer, second from most bottom layer
             if (failed)
             {
+                float strategy2StartTime = Time.realtimeSinceStartup;
+                Debug.Log("[预加载性能] 开始策略2分配");
                 tiles.ForEach((t) => { t.SetExcluded(false); });
                 for (int i = 0; i < tT.Count; i += 2)
                 {
-                    List<MahjongTile>  freeTiles = GetFreeToFillTiles(tiles, true, true); // reverse sorted
+                    // 分帧：每次循环都暂停
+                    yield return null; // 每次循环都暂停
+
+                    List<MahjongTile> freeTiles = GetFreeToFillTiles(tiles, true, true); // reverse sorted
                     if (freeTiles.Count == 1)
                     {
                         failed = true;
+                        Debug.Log("[预加载性能] 策略2失败，可用麻将牌不足");
                         onComplete?.Invoke();
                         yield break;
                     }
                     MahjongTile t1 = freeTiles[0];
                     MahjongTile t2 = freeTiles[freeTiles.Count - 1];
                     freeTiles[0].SetExcluded(true);
+                    yield return null; // 设置排除状态后暂停
                     freeTiles[1].SetExcluded(true);
-                    SpritesPair s = sprites[i/2];
+                    yield return null; // 设置排除状态后暂停
+                    SpritesPair s = sprites[i / 2];
                     t1.SetSprite(s.sprite_1);
+                    yield return null; // 设置第一个图片后暂停
                     t2.SetSprite(s.sprite_2);
+
+                    // 平滑优化：设置图片后立即暂停一帧
+                    yield return null;
+
                     yieldCounter++;
+                    // 每分配一对麻将牌就暂停一帧，减少卡顿
                     if (yieldCounter % yieldStep == 0) yield return null;
                 }
+                float strategy2Time = Time.realtimeSinceStartup - strategy2StartTime;
+                Debug.Log($"[预加载性能] 策略2分配完成，耗时: {strategy2Time:F3}秒");
             }
-            if (!failed) {
+            if (!failed)
+            {
                 onComplete?.Invoke();
                 foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
                 {
@@ -759,32 +863,54 @@ namespace Mkey
                 }
                 yield break;
             }
+
+            // 分帧：策略2失败后暂停
+            yield return null;
+            yield return null; // 额外分帧
+
             // 3 type - get 2 tiles from most top layers
             if (failed)
             {
-                tiles.ForEach((t)=> { t.SetExcluded(false); });
+                float strategy3StartTime = Time.realtimeSinceStartup;
+                Debug.Log("[预加载性能] 开始策略3分配");
+                tiles.ForEach((t) => { t.SetExcluded(false); });
                 failed = false;
                 for (int i = 0; i < tT.Count; i += 2)
                 {
+                    // 分帧：每次循环都暂停
+                    yield return null; // 每次循环都暂停
+
                     List<MahjongTile> freeTiles = GetFreeToFillTiles(tiles, true, true); // reverse sorted
                     if (freeTiles.Count == 1)
                     {
                         failed = true;
+                        Debug.Log("[预加载性能] 策略3失败，可用麻将牌不足");
                         onComplete?.Invoke();
                         yield break;
                     }
                     MahjongTile t1 = freeTiles[0];
                     MahjongTile t2 = freeTiles[1];
                     freeTiles[0].SetExcluded(true);
+                    yield return null; // 设置排除状态后暂停
                     freeTiles[1].SetExcluded(true);
+                    yield return null; // 设置排除状态后暂停
                     SpritesPair s = sprites[i / 2];
                     t1.SetSprite(s.sprite_1);
+                    yield return null; // 设置第一个图片后暂停
                     t2.SetSprite(s.sprite_2);
+
+                    // 平滑优化：设置图片后立即暂停一帧
+                    yield return null;
+
                     yieldCounter++;
+                    // 每分配一对麻将牌就暂停一帧，减少卡顿
                     if (yieldCounter % yieldStep == 0) yield return null;
                 }
+                float strategy3Time = Time.realtimeSinceStartup - strategy3StartTime;
+                Debug.Log($"[预加载性能] 策略3分配完成，耗时: {strategy3Time:F3}秒");
             }
-            if (!failed) {
+            if (!failed)
+            {
                 onComplete?.Invoke();
                 foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
                 {
@@ -792,12 +918,23 @@ namespace Mkey
                 }
                 yield break;
             }
+
+            // 分帧：所有策略失败，开始兜底分配前暂停
+            yield return null;
+            yield return null; // 额外分帧
+
             // 兜底：分配失败，智能兜底分配
+            float fallbackStartTime = Time.realtimeSinceStartup;
+            Debug.Log("[预加载性能] 开始兜底分配");
             int bestMatchCount = -1;
             List<Sprite> bestSprites = null;
             for (int tryIdx = 0; tryIdx < 20; tryIdx++)
             {
-                List<Sprite> allSprites = new List<Sprite>();
+                // 分帧：每次尝试前暂停
+                yield return null; // 每次尝试都暂停
+
+                // 性能优化：预分配容量，减少扩容开销
+                List<Sprite> allSprites = new List<Sprite>(sprites.Count * 2);
                 for (int i = 0; i < sprites.Count; i++)
                 {
                     allSprites.Add(sprites[i].sprite_1);
@@ -808,7 +945,8 @@ namespace Mkey
                 for (int i = 0; i < tiles.Count; i++)
                 {
                     tiles[i].SetSprite(allSprites[i]);
-                    if (i % 2 == 0) yield return null;
+                    // 每分配一个麻将牌就暂停一帧，减少卡顿
+                    if (i % 1 == 0) yield return null; // 每个麻将牌都暂停
                 }
                 int matchCount = 0;
                 try
@@ -829,7 +967,245 @@ namespace Mkey
                 for (int i = 0; i < tiles.Count; i++)
                 {
                     tiles[i].SetSprite(bestSprites[i]);
-                    if (i % 2 == 0) yield return null;
+                    // 每分配一个麻将牌就暂停一帧，减少卡顿
+                    if (i % 1 == 0) yield return null; // 每个麻将牌都暂停
+                }
+            }
+            float fallbackTime = Time.realtimeSinceStartup - fallbackStartTime;
+            Debug.Log($"[预加载性能] 兜底分配完成，耗时: {fallbackTime:F3}秒，最优可消对数: {bestMatchCount}");
+
+            foreach (var tile in tiles)
+            {
+                if (tile.SRenderer.sprite == null)
+                    Debug.LogError($"分配后有白图，tile: {tile.name}");
+            }
+            onComplete?.Invoke();
+            foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
+            {
+                tile.SetToFront(false);
+            }
+
+            float totalTime = Time.realtimeSinceStartup - startTime;
+            Debug.Log($"[预加载性能] 图片分配完成，总耗时: {totalTime:F3}秒");
+        }
+
+        public System.Collections.IEnumerator SetMahjongSpritesAsync(System.Action onComplete, int yieldStep = 1)
+        {
+            // 第一关新手引导特殊排列
+            if (GameLevelHolder.CurrentLevel == 0)
+            {
+                SetTutorialSprites(onComplete);
+                yield break;
+            }
+            // 第二关新手引导特殊排列
+            if (GameLevelHolder.CurrentLevel == 1)
+            {
+                SetMahjongSpritesForLevel2(onComplete);
+                yield break;
+            }
+
+            //for (int i = 0; i < tiles.Count; i++)
+            //{
+            //    tiles[i].PlayLoad();
+            //}
+            // 获取图片对，分帧处理
+            var sprites = goSet.GetRandomPairs(tiles.Count / 2, LcSet.fillType);
+            yield return null; // 分帧：获取图片对后暂停
+            yield return null; // 额外分帧：确保完全平滑
+
+            var tT = tiles;
+            bool failed = false;
+            int yieldCounter = 0;
+
+            // 1 type - get random from free to fill tiles
+            for (int i = 0; i < tT.Count; i += 2)
+            {
+                // 分帧：每次循环都暂停
+                yield return null; // 每次循环都暂停
+
+                List<MahjongTile> freeTiles = GetFreeToFillTiles(tiles, true, false);      // not sorted by layer
+                if (freeTiles.Count < 5) freeTiles = GetFreeToFillTiles(tiles, true, true); // avoid last error (tile 0 over tile)
+                if (freeTiles.Count == 1)
+                {
+                    failed = true;
+                    onComplete?.Invoke();
+                    yield break;
+                }
+                MahjongTile t1 = freeTiles[0];
+                MahjongTile t2 = freeTiles[1];
+                freeTiles[0].SetExcluded(true);
+                yield return null; // 设置排除状态后暂停
+                freeTiles[1].SetExcluded(true);
+                yield return null; // 设置排除状态后暂停
+                SpritesPair s = sprites[i / 2];
+                t1.SetSprite(s.sprite_1);
+                yield return null; // 设置第一个图片后暂停
+                t2.SetSprite(s.sprite_2);
+
+                // 平滑优化：设置图片后立即暂停一帧
+                yield return null;
+
+                yieldCounter++;
+                // 每分配一对麻将牌就暂停一帧，减少卡顿
+                if (yieldCounter % yieldStep == 0) yield return null;
+            }
+            if (!failed)
+            {
+                onComplete?.Invoke();
+                foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
+                {
+                    tile.SetToFront(false);
+                }
+                yield break;
+            }
+
+            // 分帧：策略1失败后暂停
+            yield return null;
+            yield return null; // 额外分帧
+
+            // 2 type -  get first from most top layer, second from most bottom layer
+            if (failed)
+            {
+                tiles.ForEach((t) => { t.SetExcluded(false); });
+                for (int i = 0; i < tT.Count; i += 2)
+                {
+                    // 分帧：每次循环都暂停
+                    yield return null; // 每次循环都暂停
+
+                    List<MahjongTile> freeTiles = GetFreeToFillTiles(tiles, true, true); // reverse sorted
+                    if (freeTiles.Count == 1)
+                    {
+                        failed = true;
+                        onComplete?.Invoke();
+                        yield break;
+                    }
+                    MahjongTile t1 = freeTiles[0];
+                    MahjongTile t2 = freeTiles[freeTiles.Count - 1];
+                    freeTiles[0].SetExcluded(true);
+                    yield return null; // 设置排除状态后暂停
+                    freeTiles[1].SetExcluded(true);
+                    yield return null; // 设置排除状态后暂停
+                    SpritesPair s = sprites[i / 2];
+                    t1.SetSprite(s.sprite_1);
+                    yield return null; // 设置第一个图片后暂停
+                    t2.SetSprite(s.sprite_2);
+
+                    // 平滑优化：设置图片后立即暂停一帧
+                    yield return null;
+
+                    yieldCounter++;
+                    // 每分配一对麻将牌就暂停一帧，减少卡顿
+                    if (yieldCounter % yieldStep == 0) yield return null;
+                }
+            }
+            if (!failed)
+            {
+                onComplete?.Invoke();
+                foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
+                {
+                    tile.SetToFront(false);
+                }
+                yield break;
+            }
+
+            // 分帧：策略2失败后暂停
+            yield return null;
+            yield return null; // 额外分帧
+
+            // 3 type - get 2 tiles from most top layers
+            if (failed)
+            {
+                tiles.ForEach((t) => { t.SetExcluded(false); });
+                failed = false;
+                for (int i = 0; i < tT.Count; i += 2)
+                {
+                    // 分帧：每次循环都暂停
+                    yield return null; // 每次循环都暂停
+
+                    List<MahjongTile> freeTiles = GetFreeToFillTiles(tiles, true, true); // reverse sorted
+                    if (freeTiles.Count == 1)
+                    {
+                        failed = true;
+                        onComplete?.Invoke();
+                        yield break;
+                    }
+                    MahjongTile t1 = freeTiles[0];
+                    MahjongTile t2 = freeTiles[1];
+                    freeTiles[0].SetExcluded(true);
+                    yield return null; // 设置排除状态后暂停
+                    freeTiles[1].SetExcluded(true);
+                    yield return null; // 设置排除状态后暂停
+                    SpritesPair s = sprites[i / 2];
+                    t1.SetSprite(s.sprite_1);
+                    yield return null; // 设置第一个图片后暂停
+                    t2.SetSprite(s.sprite_2);
+
+                    // 平滑优化：设置图片后立即暂停一帧
+                    yield return null;
+
+                    yieldCounter++;
+                    // 每分配一对麻将牌就暂停一帧，减少卡顿
+                    if (yieldCounter % yieldStep == 0) yield return null;
+                }
+            }
+            if (!failed)
+            {
+                onComplete?.Invoke();
+                foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
+                {
+                    tile.SetToFront(false);
+                }
+                yield break;
+            }
+
+            // 分帧：所有策略失败，开始兜底分配前暂停
+            yield return null;
+            yield return null; // 额外分帧
+
+            // 兜底：分配失败，智能兜底分配
+            int bestMatchCount = -1;
+            List<Sprite> bestSprites = null;
+            for (int tryIdx = 0; tryIdx < 20; tryIdx++)
+            {
+                // 分帧：每次尝试前暂停
+                yield return null; // 每次尝试都暂停
+
+                // 性能优化：预分配容量，减少扩容开销
+                List<Sprite> allSprites = new List<Sprite>(sprites.Count * 2);
+                for (int i = 0; i < sprites.Count; i++)
+                {
+                    allSprites.Add(sprites[i].sprite_1);
+                    allSprites.Add(sprites[i].sprite_2);
+                }
+                allSprites.Shuffle();
+                tiles.ForEach(t => { t.SetExcluded(false); t.SetSprite(null); });
+                for (int i = 0; i < tiles.Count; i++)
+                {
+                    tiles[i].SetSprite(allSprites[i]);
+                    // 每分配一个麻将牌就暂停一帧，减少卡顿
+                    if (i % 1 == 0) yield return null; // 每个麻将牌都暂停
+                }
+                int matchCount = 0;
+                try
+                {
+                    var possibleMatches = new PossibleMatches(tiles.FindAll(t => t != null && t.IsFreeToMatch()));
+                    matchCount = possibleMatches.Count;
+                }
+                catch { matchCount = 0; }
+                if (matchCount > bestMatchCount)
+                {
+                    bestMatchCount = matchCount;
+                    bestSprites = new List<Sprite>(allSprites);
+                }
+                yield return null;
+            }
+            if (bestSprites != null)
+            {
+                for (int i = 0; i < tiles.Count; i++)
+                {
+                    tiles[i].SetSprite(bestSprites[i]);
+                    // 每分配一个麻将牌就暂停一帧，减少卡顿
+                    if (i % 1 == 0) yield return null; // 每个麻将牌都暂停
                 }
             }
             foreach (var tile in tiles)
@@ -845,21 +1221,125 @@ namespace Mkey
         }
 
         /// <summary>
+        /// 异步创建麻将牌（用于预加载）
+        /// </summary>
+        public System.Collections.IEnumerator CreateMahjongTilesAsync(LevelConstructSet lcSet, GameMode gMode)
+        {
+            Debug.Log("[预加载性能] 开始异步创建麻将牌");
+
+            // 性能优化：预分配容量，减少扩容开销
+            int estimatedTileCount = 0;
+            if (lcSet.cells != null)
+            {
+                foreach (var c in lcSet.cells)
+                {
+                    if (c != null && c.gridObjects != null)
+                    {
+                        estimatedTileCount += c.gridObjects.Count;
+                    }
+                }
+            }
+
+            tiles = new List<MahjongTile>(estimatedTileCount);
+            int countLimit = int.MaxValue;
+
+            if (lcSet.cells != null)
+            {
+                bool canSetNextLayer = true;
+                for (int layer = 0; layer < GameConstructSet.MaxLayersCount; layer++)
+                {
+                    if (canSetNextLayer)
+                    {
+                        canSetNextLayer = false;
+                        int objectsCount = 0;
+                        int processedInLayer = 0;
+
+                        // 性能优化：使用for循环替代foreach，减少隐式迭代器分配
+                        for (int i = 0; i < lcSet.cells.Count; i++)
+                        {
+                            var c = lcSet.cells[i];
+                            if (c != null && c.gridObjects != null)
+                            {
+                                // 性能优化：使用for循环替代foreach，减少隐式迭代器分配
+                                for (int j = 0; j < c.gridObjects.Count; j++)
+                                {
+                                    var o = c.gridObjects[j];
+                                    if (c.row >= 0 && c.column >= 0 && c.row < Rows.Count && c.column < Rows[c.row].Length && o.layer == layer && tiles.Count < countLimit)
+                                    {
+                                        GridObject gO = Rows[c.row][c.column].SetObject(goSet.mahjongTilePrefab, layer);
+                                        MahjongTile _tile = gO ? (MahjongTile)gO : null;
+
+                                        if (_tile)
+                                        {
+                                            tiles.Add(_tile);
+                                            objectsCount++;
+                                            canSetNextLayer = true;
+                                            processedInLayer++;
+
+                                            // 每创建3个麻将牌就暂停一帧
+                                            if (processedInLayer % 1 == 0)
+                                            {
+                                                yield return null;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Debug.Log($"Layer #{layer}; objects count: {objectsCount}");
+
+                        // 每层完成后额外等待一帧
+                        yield return null;
+                    }
+                }
+
+                // 移除最后一个奇数麻将牌
+                if (gMode == GameMode.Play && tiles.Count % 2 != 0)
+                {
+                    MahjongTile mahjongTile = tiles[tiles.Count - 1];
+                    Debug.Log($"remove object: {mahjongTile.ParentCell}; layer: {mahjongTile.Layer}");
+                    mahjongTile.ParentCell.RemoveObject(mahjongTile.Layer, false);
+                    tiles.RemoveAt(tiles.Count - 1);
+                }
+
+                // 缓存原始阻挡信息
+                if (gMode == GameMode.Play)
+                {
+                    int cacheCount = 0;
+                    foreach (var item in tiles)
+                    {
+                        item.CacheRawBlockers();
+                        cacheCount++;
+
+                        // 每缓存3个麻将牌就暂停一帧
+                        if (cacheCount % 1 == 0)
+                        {
+                            yield return null;
+                        }
+                    }
+                }
+            }
+
+            Debug.Log($"[预加载性能] 异步创建麻将牌完成，共创建 {tiles.Count} 个麻将牌");
+        }
+
+        /// <summary>
         /// 新手关卡固定图片分配方法
         /// </summary>
         /// <param name="onComplete">完成回调</param>
         private void SetTutorialSprites(System.Action onComplete = null)
         {
             Debug.Log("SetTutorialSprites 开始执行，麻将牌数量: " + tiles.Count);
-            
+
             // 新手引导第一关的特定图片分配
-            List<MahjongTile> allTiles = new List<MahjongTile>(tiles);  
+            List<MahjongTile> allTiles = new List<MahjongTile>(tiles);
             ThemeSpritesHolder themeSpritesHolder = GameThemesHolder.Instance.GetTheme();
             List<Sprite> simpleSprites = new List<Sprite>(themeSpritesHolder.simpleSprites);
             while (simpleSprites.Count < 3) // 只需要3种不同的图片
             {
                 simpleSprites.AddRange(themeSpritesHolder.simpleSprites);
-            }          
+            }
             if (allTiles.Count >= 6)
             {
                 // 第1块麻将 (索引0)
@@ -894,13 +1374,13 @@ namespace Mkey
                     MahjongTile t1 = allTiles[i * 2];
                     MahjongTile t2 = allTiles[i * 2 + 1];
                     Sprite pairSprite = simpleSprites[i % simpleSprites.Count];
-                    
+
                     t1.SetSprite(pairSprite);
                     t2.SetSprite(pairSprite);
                 }
                 Debug.Log("新手关麻将牌数量不足6个，使用简单配对");
             }
-            
+
             // 奇数张时，最后一张置空
             if (allTiles.Count % 2 != 0)
             {
@@ -908,13 +1388,13 @@ namespace Mkey
                 last.SetSprite(null);
                 Debug.LogWarning("新手关有未配对的麻将牌，已置空最后一张");
             }
-            
+
             // 重置渲染顺序
             foreach (var tile in Parent.GetComponentsInChildren<MahjongTile>(true))
             {
                 tile.SetToFront(false);
             }
-            
+
             Debug.Log("SetTutorialSprites 完成");
             onComplete?.Invoke();
         }
@@ -988,14 +1468,32 @@ namespace Mkey
             onComplete?.Invoke();
         }
 
-        private List<MahjongTile> GetFreeToFillTiles(List<MahjongTile>fromTiles, bool shuffle, bool sortByLayerReverse)
+        // 性能优化：复用集合，避免重复创建
+        private List<MahjongTile> reusableFreeToFillTiles = new List<MahjongTile>(200); // 预分配容量
+
+        private List<MahjongTile> GetFreeToFillTiles(List<MahjongTile> fromTiles, bool shuffle, bool sortByLayerReverse)
         {
-            List<MahjongTile> result = new List<MahjongTile>(fromTiles);
-            result.RemoveAll((t) => { return t == null; });
-            result.RemoveAll((t) => { return t.Excluded; });
-            result.RemoveAll((t) => { return !t.IsFreeToFill(); });
+            // 性能优化：复用集合，避免重复创建
+            var result = reusableFreeToFillTiles;
+            result.Clear();
+
+            // 预分配容量，减少扩容开销
+            if (result.Capacity < fromTiles.Count)
+            {
+                result.Capacity = fromTiles.Count;
+            }
+
+            // 直接筛选，避免多次RemoveAll调用
+            foreach (var tile in fromTiles)
+            {
+                if (tile != null && !tile.Excluded && tile.IsFreeToFill())
+                {
+                    result.Add(tile);
+                }
+            }
+
             if (shuffle) result.Shuffle();
-            if (sortByLayerReverse) result.Sort((a,b) =>{return b.Layer.CompareTo(a.Layer);});
+            if (sortByLayerReverse) result.Sort((a, b) => { return b.Layer.CompareTo(a.Layer); });
             return result;
         }
         #endregion fill sprites
@@ -1006,7 +1504,7 @@ namespace Mkey
             foreach (var item in Rows)
             {
                 Vector3 pos_1 = item[0].transform.position;
-                Vector3 pos_2 = item[item.Length-1].transform.position;
+                Vector3 pos_2 = item[item.Length - 1].transform.position;
                 Debug.DrawLine(pos_1, pos_2, color);
             }
         }
@@ -1018,7 +1516,7 @@ namespace Mkey
         {
             List<GridCell> gridCells = new List<GridCell>();
             List<MahjongTile> mahjongTiles = new List<MahjongTile>(Parent.GetComponentsInChildren<MahjongTile>(true));
-            mahjongTiles.ForEach((t)=> { t.SetExcluded(false);});
+            mahjongTiles.ForEach((t) => { t.SetExcluded(false); });
             List<SpritesPair> spritesPairs = new List<SpritesPair>();
 
             while (mahjongTiles.Count > 0)   // get the list of match pairs
@@ -1056,13 +1554,13 @@ namespace Mkey
                 t1.SetSprite(item.sprite_1);
                 t2.SetSprite(item.sprite_2);
             }
-            if(failed) Debug.LogError("!!! MIX FAILED !!!");
+            if (failed) Debug.LogError("!!! MIX FAILED !!!");
         }
 
         public void ReplaceMahjongSprites(ThemeSpritesHolder oldTheme, ThemeSpritesHolder newTheme)
         {
             Dictionary<Sprite, Sprite> res = GameThemesHolder.Instance.GetSpritesDictionary(oldTheme, newTheme);
-            MahjongTile [] tT = Parent.GetComponentsInChildren<MahjongTile>();
+            MahjongTile[] tT = Parent.GetComponentsInChildren<MahjongTile>();
             foreach (var item in tT)
             {
                 item.SetSprite(res[item.MSprite]);

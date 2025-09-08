@@ -1,4 +1,4 @@
-﻿using DG.Tweening;
+using DG.Tweening;
 using LitJson;
 using Mkey;
 using Spine;
@@ -57,7 +57,7 @@ public class AideBelle : CoaxUIProwl
 [UnityEngine.Serialization.FormerlySerializedAs("Coinimage")]    public Image Overcrowd;
 [UnityEngine.Serialization.FormerlySerializedAs("CoinStr")]    public Text FleeIts;
 
-
+    public Button OutSetting;
     // Start is called before the first frame update
     void Start()
     {
@@ -132,6 +132,11 @@ public class AideBelle : CoaxUIProwl
             LiftUIFine(nameof(RadiateBelle));
         });
         RadiateYam.onClick.AddListener(() =>
+        {
+            LiftUIFine(nameof(RadiateBelle));
+        });
+
+        OutSetting.onClick.AddListener(() =>
         {
             LiftUIFine(nameof(RadiateBelle));
         });

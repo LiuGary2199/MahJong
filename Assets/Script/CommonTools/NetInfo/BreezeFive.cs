@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -80,8 +80,30 @@ public class GameData
     public int combommul; // 组合倍数
     public int combogold; // 组合金币数
     public int automatch; // 剩余自动收集
-
+    public List<AutoCollectSetting> autocollectlist;
 }
+
+[Serializable]
+// 单个关卡范围的自动收集配置
+public class AutoCollectSetting
+{
+    // 关卡范围信息
+    public LevelRange levelRange { get; set; }
+
+    // 剩余配对数量，与JSON中的pairnum字段匹配
+    public int pairnum { get; set; }
+}
+[Serializable]
+// 关卡范围定义类
+public class LevelRange
+{
+    // 最小关卡
+    public int min { get; set; }
+
+    // 最大关卡
+    public int max { get; set; }
+}
+
 
 [Serializable] // 用于JsonUtility序列化/反序列化
 public class RewardData

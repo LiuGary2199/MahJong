@@ -4,6 +4,7 @@ using Spine;
 using Spine.Unity;
 using UnityEngine;
 using UnityEngine.UI;
+using Mkey;
 
 public class WhistleBelle : MonoBehaviour
 {
@@ -23,7 +24,7 @@ public class WhistleBelle : MonoBehaviour
         {
             StableNoisy.fillAmount += Time.deltaTime / 3f;
             AccuracyExam.text = (int)(StableNoisy.fillAmount * 100) + "%";
-            if (StableNoisy.fillAmount >= 1)
+            if (StableNoisy.fillAmount >= 1 && GameBoard.LoadingFinish)
             {
                 StrikeUtil.WeGrade();
                 Destroy(transform.parent.gameObject);

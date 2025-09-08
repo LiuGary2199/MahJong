@@ -15,4 +15,4 @@ MonoBehaviour:
   backGrounds:
   - {fileID: 21300000, guid: c983aae40f1a98045b154a674296781d, type: 3}
   gridCellPrefab: {fileID: 1620328219776326, guid: d78b3e7e18d322e4fafb04b99938bcfc, type: 3}
-  mahjongTilePrefab: {fileID: -2027995816183100286, guid: 6502248fe9ccfa8458ec3e009f2b9d2e, type: 3}
+  mahjongTilePrefab: {fileID: -2027995816183100286, guid: 3da772025e79a754191924a58233f69e, type: 3}

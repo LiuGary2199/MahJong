@@ -33,17 +33,19 @@ public class RandomBackgroundFitter : MonoBehaviour
             return;
         }
 
-        if (GameLevelHolder.CurrentLevel <= 1) 
+        if (GameLevelHolder.CurrentLevel <= 50) 
         {
             // 随机选择一张图片
             Sprite selected = backgroundSprites[0];
             spriteRenderer.sprite = selected;
         }
         else
-        {   
-            // 随机选择一张图片
-            Sprite selected = backgroundSprites[Random.Range(0, backgroundSprites.Length)];
+        {
+            Sprite selected = backgroundSprites[1];
             spriteRenderer.sprite = selected;
+            // 随机选择一张图片
+           // Sprite selected = backgroundSprites[Random.Range(0, backgroundSprites.Length)];
+          //  spriteRenderer.sprite = selected;
         }
 
 

@@ -1,10 +1,11 @@
-﻿//#define useinterface
+//#define useinterface
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using System.Collections.Generic;
-using System;
-using System.Linq;
 
 /*
     changes
@@ -55,7 +56,7 @@ namespace Mkey
         /// </summary>
         public Vector3 WorldTouchPos
         {
-            get { return (CameraMain) ?  CameraMain.ScreenToWorldPoint(ScreenTouchPos) : Vector3.zero; }
+            get { return (CameraMain) ? CameraMain.ScreenToWorldPoint(ScreenTouchPos) : Vector3.zero; }
         }
 
         public Vector2 ScreenTouchPos { get; private set; }
@@ -110,15 +111,16 @@ namespace Mkey
             {
                 if (!IsTouched)
                 {
-                    #if UNITY_EDITOR
-                        if (dlog) Debug.Log("----------------POINTER Down--------------( " + data.pointerId);
-                    #endif
+#if UNITY_EDITOR
+                    if (dlog) Debug.Log("----------------POINTER Down--------------( " + data.pointerId);
+#endif
 
                     IsTouched = true;
                     tpea = new TouchPadEventArgs();
                     ScreenTouchPos = data.position;
                     oldPosition = ScreenTouchPos;
                     pointerID = data.pointerId;
+
 
                     tpea.SetTouch(ScreenTouchPos, Vector2.zero, TouchPhase.Began, onlyTopCollider);
                     hitList = new List<Collider2D>();
@@ -127,10 +129,24 @@ namespace Mkey
                     {
                         for (int i = 0; i < hitList.Count; i++)
                         {
-                            ExecuteEvents.Execute<TouchPadMessageTarget>(hitList[i].gameObject, null, (x, y) => x.PointerDown(tpea));
-                            if (tpea.firstSelected == null && hitList[i]) tpea.firstSelected = hitList[i].GetComponent<TouchPadMessageTarget>();
+                            var hitCollider = hitList[i];
+                            var mahjongTile = hitCollider.GetComponent<MahjongTile>();
+                            ExecuteEvents.Execute<TouchPadMessageTarget>(hitCollider.gameObject, null, (x, y) => x.PointerDown(tpea));
+                            if (tpea.firstSelected == null && hitCollider) tpea.firstSelected = hitCollider.GetComponent<TouchPadMessageTarget>();
+
+                            // 检查是否点击了麻将牌
+                            if (mahjongTile != null)
+                            {
+                                // 发送麻将点击消息
+                                SeepageGrassy.FastSeepage(CStatus.mg_OnMahjongClick, null);
+                            }
                         }
                     }
+                    else
+                    {
+                        //   Debug.Log($"[TouchPad] 没有检测到任何碰撞体");
+                    }
+
                     ScreenPointerDownEvent?.Invoke(tpea);
                 }
             }
@@ -146,9 +162,9 @@ namespace Mkey
             {
                 if (data.pointerId == pointerID)
                 {
-                    #if UNITY_EDITOR
-                        if (dlog) Debug.Log("----------------BEGIN DRAG--------------( " + data.pointerId);
-                    #endif
+#if UNITY_EDITOR
+                    if (dlog) Debug.Log("----------------BEGIN DRAG--------------( " + data.pointerId);
+#endif
 
                     ScreenTouchPos = data.position;
                     tpea.SetTouch(ScreenTouchPos, ScreenTouchPos - oldPosition, TouchPhase.Moved, onlyTopCollider);
@@ -172,9 +188,9 @@ namespace Mkey
             {
                 if (data.pointerId == pointerID)
                 {
-                    #if UNITY_EDITOR
-                        if (dlog) Debug.Log("---------------- ONDRAG --------------( " + data.pointerId + " : " + pointerID);
-                    #endif
+#if UNITY_EDITOR
+                    if (dlog) Debug.Log("---------------- ONDRAG --------------( " + data.pointerId + " : " + pointerID);
+#endif
 
                     ScreenTouchPos = data.position;
                     tpea.SetTouch(ScreenTouchPos, ScreenTouchPos - oldPosition, TouchPhase.Moved, onlyTopCollider);
@@ -218,9 +234,9 @@ namespace Mkey
             {
                 if (data.pointerId == pointerID)
                 {
-                    #if UNITY_EDITOR
-                        if (dlog) Debug.Log("----------------POINTER UP--------------( " + data.pointerId + " : " + pointerID);
-                    #endif
+#if UNITY_EDITOR
+                    if (dlog) Debug.Log("----------------POINTER UP--------------( " + data.pointerId + " : " + pointerID);
+#endif
 
                     ScreenTouchPos = data.position;
                     tpea.SetTouch(ScreenTouchPos, ScreenTouchPos - oldPosition, TouchPhase.Ended, onlyTopCollider);
@@ -230,11 +246,11 @@ namespace Mkey
                     {
                         if (cHit) ExecuteEvents.Execute<TouchPadMessageTarget>(cHit.gameObject, null, (x, y) => x.PointerUp(tpea));
                     }
-                   
+
                     newHitList = new List<Collider2D>(tpea.hits);
                     foreach (Collider2D cHit in newHitList)
                     {
-                        if (cHit && hitList.IndexOf(cHit)==-1) ExecuteEvents.Execute<TouchPadMessageTarget>(cHit.gameObject, null, (x, y) => x.PointerUp(tpea));
+                        if (cHit && hitList.IndexOf(cHit) == -1) ExecuteEvents.Execute<TouchPadMessageTarget>(cHit.gameObject, null, (x, y) => x.PointerUp(tpea));
                         if (cHit) ExecuteEvents.Execute<TouchPadMessageTarget>(cHit.gameObject, null, (x, y) => x.DragDrop(tpea));
                     }
                     hitList = new List<Collider2D>();
@@ -251,9 +267,9 @@ namespace Mkey
             {
                 if (data.pointerId == pointerID)
                 {
-                    #if UNITY_EDITOR
-                        if (dlog) Debug.Log("----------------POINTER EXIT--------------( " + data.pointerId + " : " + pointerID);
-                    #endif
+#if UNITY_EDITOR
+                    if (dlog) Debug.Log("----------------POINTER EXIT--------------( " + data.pointerId + " : " + pointerID);
+#endif
 
                     ScreenTouchPos = data.position;
                     tpea.SetTouch(ScreenTouchPos, ScreenTouchPos - oldPosition, TouchPhase.Ended, onlyTopCollider);
@@ -282,9 +298,9 @@ namespace Mkey
             {
                 if (data.pointerId == pointerID)
                 {
-                    #if UNITY_EDITOR
-                        if (dlog) Debug.Log("----------------ONDROP--------------( " + data.pointerId + " : " + pointerID);
-                    #endif
+#if UNITY_EDITOR
+                    if (dlog) Debug.Log("----------------ONDROP--------------( " + data.pointerId + " : " + pointerID);
+#endif
                 }
             }
 
@@ -296,7 +312,7 @@ namespace Mkey
         /// </summary>
         public Vector3 GetWorldTouchPos()
         {
-            return CameraMain ?  CameraMain.ScreenToWorldPoint(ScreenTouchPos) : Vector3.zero;
+            return CameraMain ? CameraMain.ScreenToWorldPoint(ScreenTouchPos) : Vector3.zero;
         }
 
         /// <summary>

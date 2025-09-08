@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -11,8 +11,11 @@ namespace Mkey
     public class GridObject : MonoBehaviour
     {
         public SpriteRenderer SRenderer; // 渲染器
-        public BoxCollider2D boxCollider; // 碰撞体
+        public SpriteRenderer SRMohu; // 渲染器
+        public SpriteRenderer Lie; // 渲染器
 
+        public TileAnimController m_TileAnimController;
+        public BoxCollider2D boxCollider; // 碰撞体
         #region properties
         public int Layer { get; protected set; } // 层号
         public GridCell ParentCell { get; protected set; } // 父格子
